@@ -684,7 +684,7 @@ function doRender(){
   $("#dormName").textContent = S.mode==="login" ? "หอพักจดง่าย" : (S.settings.name || "หอพัก");
   $("#navDorm").textContent = S.settings.name || "";
   { const n = Object.values(S.repairs).filter(r=>r.status==="new").length; const bd = $("#repBadge"); bd.hidden = !n; bd.textContent = n; }
-  $("#subline").textContent = S.mode==="tenant" ? "เช็กบิล ชำระเงิน และแจ้งซ่อม" : S.mode==="login" ? "เข้าสู่ระบบสำหรับเจ้าของหอ" : "ข้อมูลซิงก์ทุกเครื่อง";
+  $("#subline").textContent = S.mode==="reset" ? "ตั้งรหัสผ่านใหม่" : S.mode==="tenant" ? "เช็กบิล ชำระเงิน และแจ้งซ่อม" : S.mode==="login" ? "เข้าสู่ระบบสำหรับเจ้าของหอ" : "ข้อมูลซิงก์ทุกเครื่อง";
   $("#mLabel").textContent = monthTH(S.month);
   document.querySelectorAll("nav.tabs button").forEach(b => b.setAttribute("aria-current", b.dataset.tab===S.tab ? "page" : "false"));
   const main = $("#main");
@@ -693,6 +693,7 @@ function doRender(){
   document.body.classList.toggle("nonav", S.mode!=="owner");
   if(S.mode==="loading"){ main.innerHTML = `<div class="empty"><span class="spin"></span><span class="muted">กำลังโหลดข้อมูลหอพัก…</span></div>`; return; }
   if(S.mode==="login"){ if(!typing){ main.innerHTML = viewLogin(); } return; }
+  if(S.mode==="reset"){ if(!typing){ main.innerHTML = viewReset(); } return; }
   if(S.mode==="tenant"){ if(!typing){ main.innerHTML = viewTenant() + `<p class="small muted" style="text-align:center;margin-top:24px"><button class="linkbtn" data-act="goOwner">สำหรับเจ้าของหอ: เข้าสู่ระบบ</button></p>`; afterMain(); } else pendingMain = true; renderSheet(); return; }
   if(!S.ready) return;
   if(!typing){
@@ -1437,6 +1438,28 @@ $("#mNext").onclick = () => { S.month = addMonth(S.month,1); render(); };
 document.querySelectorAll("nav.tabs button").forEach(b => b.addEventListener("click", () => { S.tab = b.dataset.tab; S.sheet=null; try{ history.replaceState(null,"","#"+S.tab); }catch(e){} render(); window.scrollTo(0,0); }));
 
 /* ---------- auth + tenant ---------- */
+function viewReset(){
+  return `<div class="stack" style="max-width:420px;margin:24px auto 0"><div class="card"><h2 class="sec">ตั้งรหัสผ่านใหม่</h2>
+    <form class="form" id="resetForm">
+      <div><label class="small muted" for="rpPass">รหัสผ่านใหม่ (อย่างน้อย 6 ตัว)</label><input class="inp" id="rpPass" type="password" autocomplete="new-password" minlength="6" required></div>
+      ${S.loginMsg ? `<div class="verify ${S.loginErr?"bad":"ok"}">${esc(S.loginMsg)}</div>` : ""}
+      <button class="btn pri" type="submit">บันทึกรหัสผ่านใหม่</button>
+    </form></div></div>`;
+}
+async function sendReset(){
+  const email = ($("#lgEmail") && $("#lgEmail").value.trim()) || "";
+  if(!email){ S.loginMsg = "กรอกอีเมลก่อน แล้วกด “ลืมรหัสผ่าน” อีกครั้ง"; S.loginErr = true; return render(); }
+  const { error } = await sb.auth.resetPasswordForEmail(email, {redirectTo: location.origin + location.pathname});
+  S.loginMsg = error ? ("ส่งอีเมลไม่สำเร็จ: " + error.message) : `ส่งลิงก์ตั้งรหัสใหม่ไปที่ ${email} แล้ว เปิดอีเมลแล้วกดลิงก์`; S.loginErr = !!error; render();
+}
+async function saveNewPassword(){
+  const pw = $("#rpPass").value; if(pw.length < 6){ S.loginMsg = "รหัสผ่านต้องมีอย่างน้อย 6 ตัว"; S.loginErr = true; return render(); }
+  const { data, error } = await sb.auth.updateUser({password: pw});
+  if(error){ S.loginMsg = error.message; S.loginErr = true; return render(); }
+  S.loginMsg = ""; await startOwner(data.user);
+}
+document.addEventListener("click", ev => { if(ev.target.closest && ev.target.closest("[data-act=forgot]")) sendReset(); });
+document.addEventListener("submit", ev => { if(ev.target.id==="resetForm"){ ev.preventDefault(); saveNewPassword(); } });
 function viewLogin(){
   return `<div class="stack" style="max-width:420px;margin:24px auto 0">
     <div class="card"><h2 class="sec">เข้าสู่ระบบเจ้าของหอ</h2>
@@ -1447,7 +1470,8 @@ function viewLogin(){
         <div><label class="small muted" for="lgPass">รหัสผ่าน</label><input class="inp" id="lgPass" type="password" autocomplete="current-password" minlength="6" required></div>
         ${S.loginMsg ? `<div class="verify ${S.loginErr?"bad":"ok"}">${esc(S.loginMsg)}</div>` : ""}
         <button class="btn pri" type="submit" data-mode="in">เข้าสู่ระบบ</button>
-        <button class="btn ghost" type="submit" data-mode="up">สร้างบัญชีเจ้าของหอ (ครั้งแรกเท่านั้น)</button>
+        <button class="btn ghost" type="submit" data-mode="up">สร้างบัญชีใหม่</button>
+        <button class="linkbtn" type="button" data-act="forgot" style="justify-self:center">ลืมรหัสผ่าน? ส่งลิงก์ตั้งรหัสใหม่ทางอีเมล</button>
       </form></div>
     <div class="card"><h2 class="sec">สำหรับลูกบ้าน</h2><p class="small muted" style="margin:0 0 10px">เช็กบิล จ่ายเงิน ส่งสลิป พิมพ์ใบเสร็จ และแจ้งซ่อม ด้วย Apartment ID ไม่ต้องสมัครสมาชิก</p><button class="btn" data-act="goTenant">ไปหน้าลูกบ้าน</button></div>
   </div>`;
@@ -1516,7 +1540,9 @@ async function loadTenant(apt){
   const cameFromOAuth = hs.has("access_token") || qs.has("code") || !!oauthErr;
   let savedApt = ""; try{ savedApt = localStorage.getItem("aptId") || ""; }catch(e){}
   const { data: { session } } = await sb.auth.getSession();
+  const isRecovery = hs.get("type") === "recovery";
   if(cameFromOAuth){ try{ history.replaceState(null, "", location.pathname); }catch(e){} }
+  if(isRecovery && session){ S.mode = "reset"; render(); return; }
   if(oauthErr && !session){ S.mode = "login"; S.loginMsg = "เข้าสู่ระบบด้วย Google ไม่สำเร็จ: " + oauthErr; S.loginErr = true; render(); return; }
   if(session && !aptQ && initialHash!=="tenant"){ await startOwner(session.user); return; }
   if(aptQ || initialHash==="tenant"){
