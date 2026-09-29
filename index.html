@@ -330,6 +330,10 @@ textarea.inp{resize:vertical;min-height:80px}
 @media (max-width:560px){ nav.tabs button{font-size:10.5px} nav.tabs button svg{width:21px;height:21px} .rgrid{grid-template-columns:1fr} }
 
 body.nonav nav.tabs{display:none}
+.gbtn{width:100%;gap:10px;background:#FFFFFF;color:#1F1F1F;border-color:#DADCE0;font-weight:600}
+.gbtn:hover{border-color:#9AA0A6}
+.ordiv{display:flex;align-items:center;gap:10px;margin:14px 0 10px;color:var(--muted);font-size:12.5px}
+.ordiv::before,.ordiv::after{content:"";flex:1;height:1px;background:var(--line)}
 body.nonav main{padding-bottom:40px}
 body.nonav .monthsw{display:none}
 @media (min-width:900px){ body.nonav{padding-left:0} body.nonav .toast{left:50%} }
@@ -1436,6 +1440,8 @@ document.querySelectorAll("nav.tabs button").forEach(b => b.addEventListener("cl
 function viewLogin(){
   return `<div class="stack" style="max-width:420px;margin:24px auto 0">
     <div class="card"><h2 class="sec">เข้าสู่ระบบเจ้าของหอ</h2>
+      <button class="btn gbtn" type="button" data-act="google"><svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.9 6.1C12.5 13.6 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.4 5.7c4.3-4 6.9-9.9 6.9-17.1z"/><path fill="#FBBC05" d="M10.6 28.6A14.5 14.5 0 019.5 24c0-1.6.3-3.2.8-4.6l-7.9-6.1A24 24 0 000 24c0 3.9.9 7.5 2.6 10.7l8-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.4-5.7c-2.1 1.4-4.8 2.3-8.5 2.3-6.2 0-11.5-4.2-13.4-9.9l-8 6.1C6.6 42.6 14.6 48 24 48z"/></svg>เข้าสู่ระบบด้วย Google (Gmail)</button>
+      <div class="ordiv"><span>หรือใช้อีเมลและรหัสผ่าน</span></div>
       <form class="form" id="loginForm">
         <div><label class="small muted" for="lgEmail">อีเมล</label><input class="inp" id="lgEmail" type="email" autocomplete="email" required></div>
         <div><label class="small muted" for="lgPass">รหัสผ่าน</label><input class="inp" id="lgPass" type="password" autocomplete="current-password" minlength="6" required></div>
@@ -1446,6 +1452,12 @@ function viewLogin(){
     <div class="card"><h2 class="sec">สำหรับลูกบ้าน</h2><p class="small muted" style="margin:0 0 10px">เช็กบิล จ่ายเงิน ส่งสลิป พิมพ์ใบเสร็จ และแจ้งซ่อม ด้วย Apartment ID ไม่ต้องสมัครสมาชิก</p><button class="btn" data-act="goTenant">ไปหน้าลูกบ้าน</button></div>
   </div>`;
 }
+async function signInGoogle(){
+  S.loginMsg = "กำลังไปหน้า Google…"; S.loginErr = false; render();
+  const { error } = await sb.auth.signInWithOAuth({provider:"google", options:{redirectTo: location.origin + location.pathname, queryParams:{prompt:"select_account"}}});
+  if(error){ S.loginMsg = /not enabled|provider/i.test(error.message) ? "ยังไม่ได้เปิดใช้การเข้าสู่ระบบด้วย Google ใน Supabase" : error.message; S.loginErr = true; render(); }
+}
+document.addEventListener("click", ev => { if(ev.target.closest && ev.target.closest("[data-act=google]")) signInGoogle(); });
 async function doLogin(mode){
   const email = $("#lgEmail").value.trim(), password = $("#lgPass").value;
   if(!email || password.length < 6) { S.loginMsg = "กรอกอีเมลและรหัสผ่านอย่างน้อย 6 ตัว"; S.loginErr = true; return render(); }
@@ -1465,7 +1477,7 @@ function scheduleReload(){ clearTimeout(loadTimer); loadTimer = setTimeout(async
 async function startOwner(user){
   S.user = user; S.mode = "loading"; render();
   const { data: ok, error } = await sb.rpc("dorm_claim_owner");
-  if(error || !ok){ await sb.auth.signOut(); S.mode = "login"; S.loginMsg = "บัญชีนี้ไม่ใช่เจ้าของหอ ระบบนี้มีเจ้าของแล้ว"; S.loginErr = true; return render(); }
+  if(error || !ok){ await sb.auth.signOut(); S.mode = "login"; S.loginMsg = `บัญชี ${user && user.email ? user.email : "นี้"} ไม่มีสิทธิ์เจ้าของหอ ใช้ Gmail ที่ลงทะเบียนเป็นเจ้าของหอ`; S.loginErr = true; return render(); }
   try{ await loadOwnerData(); }catch(e){ console.error(e); S.mode = "login"; S.loginMsg = "โหลดข้อมูลไม่สำเร็จ ลองใหม่อีกครั้ง"; S.loginErr = true; return render(); }
   S.mode = "owner"; S.ready = true; S.online = true; S.loginMsg = "";
   if(S.tab==="tenant" && initialHash==="tenant") S.tab = "rooms";
@@ -1499,8 +1511,13 @@ async function loadTenant(apt){
 (async function boot(){
   if(!sb){ $("#main").innerHTML = `<div class="card empty"><h2>เชื่อมต่อฐานข้อมูลไม่ได้</h2><p class="small muted">ตรวจอินเทอร์เน็ตแล้วโหลดหน้านี้ใหม่</p></div>`; return; }
   const qs = new URLSearchParams(location.search); const aptQ = qs.get("apt");
+  const hs = new URLSearchParams(location.hash.replace(/^#/, ""));
+  const oauthErr = hs.get("error_description") || qs.get("error_description");
+  const cameFromOAuth = hs.has("access_token") || qs.has("code") || !!oauthErr;
   let savedApt = ""; try{ savedApt = localStorage.getItem("aptId") || ""; }catch(e){}
   const { data: { session } } = await sb.auth.getSession();
+  if(cameFromOAuth){ try{ history.replaceState(null, "", location.pathname); }catch(e){} }
+  if(oauthErr && !session){ S.mode = "login"; S.loginMsg = "เข้าสู่ระบบด้วย Google ไม่สำเร็จ: " + oauthErr; S.loginErr = true; render(); return; }
   if(session && !aptQ && initialHash!=="tenant"){ await startOwner(session.user); return; }
   if(aptQ || initialHash==="tenant"){
     S.mode = "tenant"; S.tab = "tenant"; S.tenantApt = (aptQ || savedApt || "").toUpperCase();
