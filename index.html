@@ -330,6 +330,7 @@ textarea.inp{resize:vertical;min-height:80px}
 @media (max-width:560px){ nav.tabs button{font-size:10.5px} nav.tabs button svg{width:21px;height:21px} .rgrid{grid-template-columns:1fr} }
 
 body.nonav nav.tabs{display:none}
+.otpin{font-family:var(--mono);font-size:24px !important;letter-spacing:.35em;text-align:center}
 .pwwrap{position:relative}
 .pwwrap .inp{padding-right:52px;width:100%}
 .eyebtn{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:44px;height:40px;border:0;background:none;color:var(--muted);cursor:pointer;display:grid;place-items:center;border-radius:8px}
@@ -1484,9 +1485,13 @@ function viewLogin(){
         ${S.loginMsg ? `<div class="verify ${S.loginErr?"bad":"ok"}">${esc(S.loginMsg)}</div>` : ""}
         <button class="btn pri" type="submit" data-mode="in">เข้าสู่ระบบ</button>
       </form>
-      <div class="ordiv"><span>หรือ ไม่ต้องใช้รหัสผ่าน</span></div>
-      <button class="btn" type="button" data-act="magic" style="width:100%">ส่งลิงก์เข้าระบบไปที่ Gmail</button>
-      <p class="small muted" style="margin:8px 0 0">กรอกอีเมลหรือเบอร์ด้านบน แล้วกดปุ่มนี้ ระบบส่งลิงก์ไปที่ Gmail ของเจ้าของหอ กดลิงก์ในอีเมลก็เข้าได้เลย</p>
+      <div class="ordiv"><span>หรือ ใช้รหัส OTP ทาง Gmail</span></div>
+      ${S.otpEmail ? `<form class="form" id="otpForm">
+        <div><label class="small muted" for="otpCode">รหัส OTP 6 หลักจากอีเมล</label><input class="inp otpin" id="otpCode" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]*" maxlength="8" placeholder="• • • • • •"></div>
+        <button class="btn pri" type="submit">ยืนยันรหัส OTP</button>
+        <div class="row" style="justify-content:space-between"><button class="linkbtn" type="button" data-act="magic">ส่งรหัสใหม่</button><button class="linkbtn" type="button" data-act="otpCancel">เปลี่ยนอีเมล</button></div>
+      </form>` : `<button class="btn" type="button" data-act="magic" style="width:100%">ขอรหัส OTP ทาง Gmail</button>
+      <p class="small muted" style="margin:8px 0 0">กรอกอีเมลหรือเบอร์ด้านบน แล้วกดปุ่มนี้ ระบบส่งรหัส 6 หลักไปที่ Gmail ของเจ้าของหอ พิมพ์รหัสบนมือถือเครื่องไหนก็เข้าได้</p>`}
       <div style="text-align:center;margin-top:10px"><button class="linkbtn" type="button" data-act="forgot">ลืมรหัสผ่าน? ส่งลิงก์ตั้งรหัสใหม่ทางอีเมล</button></div>
     </div>
     <div class="card"><h2 class="sec">สำหรับลูกบ้าน</h2><p class="small muted" style="margin:0 0 10px">เช็กบิล จ่ายเงิน ส่งสลิป พิมพ์ใบเสร็จ และแจ้งซ่อม ด้วย Apartment ID ไม่ต้องสมัครสมาชิก</p><button class="btn" data-act="goTenant">ไปหน้าลูกบ้าน</button></div>
@@ -1512,9 +1517,23 @@ async function sendMagic(){
   S.loginMsg = "กำลังส่ง…"; S.loginErr = false; render();
   const { error } = await sb.auth.signInWithOtp({email: r.email, options:{emailRedirectTo: location.origin + location.pathname, shouldCreateUser:false}});
   if(error){ S.loginMsg = /rate|seconds|too many/i.test(error.message) ? "ส่งบ่อยเกินไป รอประมาณ 1 นาทีแล้วลองใหม่" : /not found|signups not allowed|user/i.test(error.message) ? "ไม่พบบัญชีนี้ ตรวจอีเมลอีกครั้ง" : error.message; S.loginErr = true; return render(); }
-  S.loginMsg = `ส่งลิงก์ไปที่ ${r.email.replace(/^(.{3}).*(@.*)$/, "$1•••$2")} แล้ว เปิด Gmail แล้วกดลิงก์ “Log In” (ถ้าไม่เห็น ดูในสแปม)`; S.loginErr = false; render();
+  S.otpEmail = r.email;
+  S.loginMsg = `ส่งรหัส OTP ไปที่ ${r.email.replace(/^(.{3}).*(@.*)$/, "$1•••$2")} แล้ว เปิด Gmail แล้วพิมพ์รหัส 6 หลักด้านล่าง (ถ้าไม่เห็น ดูในสแปม)`; S.loginErr = false; render();
+  setTimeout(()=>{ const c = $("#otpCode"); if(c) c.focus(); }, 50);
 }
 document.addEventListener("click", ev => { if(ev.target.closest && ev.target.closest("[data-act=magic]")) sendMagic(); });
+document.addEventListener("click", ev => { if(ev.target.closest && ev.target.closest("[data-act=otpCancel]")){ S.otpEmail = ""; S.loginMsg = ""; render(); } });
+async function verifyOtp(){
+  const code = (($("#otpCode") && $("#otpCode").value) || "").replace(/\D/g, "");
+  blurActive();
+  if(code.length < 6){ S.loginMsg = "กรอกรหัส OTP 6 หลักจากอีเมล"; S.loginErr = true; return render(); }
+  S.loginMsg = "กำลังตรวจรหัส…"; S.loginErr = false; render();
+  let res = await sb.auth.verifyOtp({email: S.otpEmail, token: code, type: "email"});
+  if(res.error) res = await sb.auth.verifyOtp({email: S.otpEmail, token: code, type: "magiclink"});
+  if(res.error || !res.data || !res.data.session){ S.loginMsg = res.error && /expired/i.test(res.error.message) ? "รหัสหมดอายุ กด “ส่งรหัสใหม่”" : "รหัส OTP ไม่ถูกต้อง ตรวจรหัสล่าสุดในอีเมลอีกครั้ง"; S.loginErr = true; return render(); }
+  S.otpEmail = ""; S.loginMsg = ""; await startOwner(res.data.session.user);
+}
+document.addEventListener("submit", ev => { if(ev.target.id==="otpForm"){ ev.preventDefault(); verifyOtp(); } });
 async function doLogin(){
   blurActive();
   const password = ($("#lgPass").value || "").replace(/^\s+|\s+$/g, "");
