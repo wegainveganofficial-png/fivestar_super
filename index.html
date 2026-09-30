@@ -703,7 +703,7 @@ function doRender(){
   const typing = ae && main.contains(ae) && (ae.tagName==="INPUT"||ae.tagName==="TEXTAREA"||ae.tagName==="SELECT") && ae.type!=="file";
   document.body.classList.toggle("nonav", S.mode!=="owner");
   if(S.mode==="loading"){ main.innerHTML = `<div class="empty"><span class="spin"></span><span class="muted">กำลังโหลดข้อมูลหอพัก…</span></div>`; return; }
-  if(S.mode==="login"){ if(!typing){ main.innerHTML = viewLogin(); } return; }
+  if(S.mode==="login"){ if(!typing){ const pw = $("#lgPass"), pv = pw ? pw.value : "", pt = pw ? pw.type : "password"; main.innerHTML = viewLogin(); const np = $("#lgPass"); if(np && pv){ np.value = pv; if(pt === "text"){ np.type = "text"; const eb = document.querySelector("[data-act=togglePw]"); if(eb){ eb.innerHTML = EYE_OFF; eb.setAttribute("aria-pressed","true"); } } } } return; }
   if(S.mode==="reset"){ if(!typing){ main.innerHTML = viewReset(); } return; }
   if(S.mode==="tenant"){ if(!typing){ main.innerHTML = viewTenant() + `<p class="small muted" style="text-align:center;margin-top:24px"><button class="linkbtn" data-act="goOwner">สำหรับเจ้าของหอ: เข้าสู่ระบบ</button></p>`; afterMain(); } else pendingMain = true; renderSheet(); return; }
   if(!S.ready) return;
