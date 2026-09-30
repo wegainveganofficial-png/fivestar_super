@@ -1347,7 +1347,7 @@ document.addEventListener("click", async ev => {
     case "quickDone": saveRepair(v, true); break;
     case "delRepair": { const r = S.repairs[v]; await safe(()=>remove("repairs", v)); if(r && r.hasPhoto) remove("repairPhotos", v).catch(()=>{}); closeSheet(); toast("ลบรายการแล้ว"); break; }
     case "cancelRepair": if(S.mode==="tenant"){ const { data } = await sb.rpc("dorm_tenant_cancel_repair", {p_apt:S.tenantApt, p_id:v}); toast(data ? "ยกเลิกการแจ้งซ่อมแล้ว" : "ยกเลิกไม่ได้ เจ้าของหอรับเรื่องแล้ว"); await loadTenant(S.tenantApt); render(); } else { await safe(()=>patch("repairs", v, {status:"cancelled"})); toast("ยกเลิกการแจ้งซ่อมแล้ว"); } break;
-    case "logout": await sb.auth.signOut(); location.hash = ""; location.reload(); break;
+    case "logout": await sb.auth.signOut({scope:"local"}); location.hash = ""; location.reload(); break;
     case "goTenant": S.mode = "tenant"; S.tab = "tenant"; try{ history.replaceState(null,"","#tenant"); }catch(e){} render(); break;
     case "goOwner": try{ history.replaceState(null,"",location.pathname); }catch(e){} location.reload(); break;
     case "copyLink": copyText(location.origin + location.pathname + "?apt=" + encodeURIComponent(v) + "#tenant"); break;
@@ -1501,7 +1501,7 @@ function scheduleReload(){ clearTimeout(loadTimer); loadTimer = setTimeout(async
 async function startOwner(user){
   S.user = user; S.mode = "loading"; render();
   const { data: ok, error } = await sb.rpc("dorm_claim_owner");
-  if(error || !ok){ await sb.auth.signOut(); S.mode = "login"; S.loginMsg = `บัญชี ${user && user.email ? user.email : "นี้"} ไม่มีสิทธิ์เจ้าของหอ ใช้ Gmail ที่ลงทะเบียนเป็นเจ้าของหอ`; S.loginErr = true; return render(); }
+  if(error || !ok){ await sb.auth.signOut({scope:"local"}); S.mode = "login"; S.loginMsg = `บัญชี ${user && user.email ? user.email : "นี้"} ไม่มีสิทธิ์เจ้าของหอ ใช้ Gmail ที่ลงทะเบียนเป็นเจ้าของหอ`; S.loginErr = true; return render(); }
   try{ await loadOwnerData(); }catch(e){ console.error(e); S.mode = "login"; S.loginMsg = "โหลดข้อมูลไม่สำเร็จ ลองใหม่อีกครั้ง"; S.loginErr = true; return render(); }
   S.mode = "owner"; S.ready = true; S.online = true; S.loginMsg = "";
   if(S.tab==="tenant" && initialHash==="tenant") S.tab = "rooms";
