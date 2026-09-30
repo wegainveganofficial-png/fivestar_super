@@ -330,6 +330,9 @@ textarea.inp{resize:vertical;min-height:80px}
 @media (max-width:560px){ nav.tabs button{font-size:10.5px} nav.tabs button svg{width:21px;height:21px} .rgrid{grid-template-columns:1fr} }
 
 body.nonav nav.tabs{display:none}
+.pwbox{margin-top:16px;border-top:1px solid var(--line);padding-top:12px}
+.pwbox summary{cursor:pointer;color:var(--muted);font-size:13.5px;margin-bottom:10px}
+#mlEmail{font-size:16px}
 .pwrow{display:flex;gap:6px}
 .pwrow .inp{flex:1;min-width:0}
 .pweye{flex:none;min-width:64px}
@@ -1468,19 +1471,33 @@ document.addEventListener("submit", ev => { if(ev.target.id==="resetForm"){ ev.p
 function viewLogin(){
   return `<div class="stack" style="max-width:420px;margin:24px auto 0">
     <div class="card"><h2 class="sec">เข้าสู่ระบบเจ้าของหอ</h2>
-      <button class="btn gbtn" type="button" data-act="google"><svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.9 6.1C12.5 13.6 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.4 5.7c4.3-4 6.9-9.9 6.9-17.1z"/><path fill="#FBBC05" d="M10.6 28.6A14.5 14.5 0 019.5 24c0-1.6.3-3.2.8-4.6l-7.9-6.1A24 24 0 000 24c0 3.9.9 7.5 2.6 10.7l8-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.4-5.7c-2.1 1.4-4.8 2.3-8.5 2.3-6.2 0-11.5-4.2-13.4-9.9l-8 6.1C6.6 42.6 14.6 48 24 48z"/></svg>เข้าสู่ระบบด้วย Google (Gmail)</button>
-      <div class="ordiv"><span>หรือใช้อีเมลและรหัสผ่าน</span></div>
+      <div class="form">
+        <div><label class="small muted" for="mlEmail">อีเมลเจ้าของหอ</label><input class="inp" id="mlEmail" type="email" inputmode="email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="you@gmail.com" value="${esc(S.mlEmail||"")}"></div>
+        <button class="btn pri" type="button" data-act="magic">ส่งลิงก์เข้าระบบไปที่ Gmail</button>
+        ${S.loginMsg ? `<div class="verify ${S.loginErr?"bad":"ok"}">${esc(S.loginMsg)}</div>` : ""}
+        <p class="small muted" style="margin:0">เปิด Gmail แล้วกดลิงก์ในอีเมล ก็เข้าระบบได้ทันที ไม่ต้องใช้รหัสผ่าน</p>
+      </div>
+      <details class="pwbox"><summary>หรือเข้าด้วยรหัสผ่าน</summary>
       <form class="form" id="loginForm">
         <div><label class="small muted" for="lgEmail">อีเมล</label><input class="inp" id="lgEmail" type="email" inputmode="email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required></div>
         <div><label class="small muted" for="lgPass">รหัสผ่าน</label><div class="pwrow"><input class="inp" id="lgPass" type="password" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false" minlength="6" required><button class="btn pweye" type="button" data-act="togglePw" aria-label="แสดงรหัสผ่าน">แสดง</button></div></div>
-        ${S.loginMsg ? `<div class="verify ${S.loginErr?"bad":"ok"}">${esc(S.loginMsg)}</div>` : ""}
         <button class="btn pri" type="submit" data-mode="in">เข้าสู่ระบบ</button>
         <button class="btn ghost" type="submit" data-mode="up">สร้างบัญชีใหม่</button>
         <button class="linkbtn" type="button" data-act="forgot" style="justify-self:center">ลืมรหัสผ่าน? ส่งลิงก์ตั้งรหัสใหม่ทางอีเมล</button>
-      </form></div>
+      </form></details></div>
     <div class="card"><h2 class="sec">สำหรับลูกบ้าน</h2><p class="small muted" style="margin:0 0 10px">เช็กบิล จ่ายเงิน ส่งสลิป พิมพ์ใบเสร็จ และแจ้งซ่อม ด้วย Apartment ID ไม่ต้องสมัครสมาชิก</p><button class="btn" data-act="goTenant">ไปหน้าลูกบ้าน</button></div>
   </div>`;
 }
+async function sendMagic(){
+  const email = (($("#mlEmail") && $("#mlEmail").value) || "").trim().toLowerCase();
+  if(!email){ if(document.activeElement && document.activeElement.blur) document.activeElement.blur(); S.loginMsg = "กรอกอีเมลก่อน"; S.loginErr = true; return render(); }
+  if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  S.loginMsg = "กำลังส่ง…"; S.loginErr = false; S.mlEmail = email; render();
+  const { error } = await sb.auth.signInWithOtp({email, options:{emailRedirectTo: location.origin + location.pathname, shouldCreateUser:false}});
+  if(error){ S.loginMsg = /rate|seconds|too many/i.test(error.message) ? "ส่งบ่อยเกินไป รอประมาณ 1 นาทีแล้วลองใหม่" : /not found|signups not allowed|user/i.test(error.message) ? "ไม่พบบัญชีนี้ ตรวจอีเมลอีกครั้ง" : error.message; S.loginErr = true; return render(); }
+  S.loginMsg = `ส่งลิงก์ไปที่ ${email} แล้ว เปิด Gmail แล้วกดลิงก์ “Log In” ในอีเมล (ถ้าไม่เห็น ดูในสแปม)`; S.loginErr = false; render();
+}
+document.addEventListener("click", ev => { if(ev.target.closest && ev.target.closest("[data-act=magic]")) sendMagic(); });
 async function signInGoogle(){
   S.loginMsg = "กำลังไปหน้า Google…"; S.loginErr = false; render();
   const { error } = await sb.auth.signInWithOAuth({provider:"google", options:{redirectTo: location.origin + location.pathname, queryParams:{prompt:"select_account"}}});
