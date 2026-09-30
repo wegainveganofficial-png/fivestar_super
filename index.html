@@ -330,6 +330,10 @@ textarea.inp{resize:vertical;min-height:80px}
 @media (max-width:560px){ nav.tabs button{font-size:10.5px} nav.tabs button svg{width:21px;height:21px} .rgrid{grid-template-columns:1fr} }
 
 body.nonav nav.tabs{display:none}
+.pwwrap{position:relative}
+.pwwrap .inp{padding-right:52px;width:100%}
+.eyebtn{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:44px;height:40px;border:0;background:none;color:var(--muted);cursor:pointer;display:grid;place-items:center;border-radius:8px}
+.eyebtn:hover,.eyebtn[aria-pressed="true"]{color:var(--accent)}
 .pwbox{margin-top:16px;border-top:1px solid var(--line);padding-top:12px}
 .pwbox summary{cursor:pointer;color:var(--muted);font-size:13.5px;margin-bottom:10px}
 #mlEmail{font-size:16px}
@@ -1454,8 +1458,10 @@ function viewReset(){
     </form></div></div>`;
 }
 async function sendReset(){
-  const email = ($("#lgEmail") && $("#lgEmail").value.trim()) || "";
-  if(!email){ S.loginMsg = "กรอกอีเมลก่อน แล้วกด “ลืมรหัสผ่าน” อีกครั้ง"; S.loginErr = true; return render(); }
+  blurActive();
+  const rr = await resolveLoginEmail(readId());
+  if(rr.error){ S.loginMsg = rr.error; S.loginErr = true; return render(); }
+  const email = rr.email;
   const { error } = await sb.auth.resetPasswordForEmail(email, {redirectTo: location.origin + location.pathname});
   S.loginMsg = error ? ("ส่งอีเมลไม่สำเร็จ: " + error.message) : `ส่งลิงก์ตั้งรหัสใหม่ไปที่ ${email} แล้ว เปิดอีเมลแล้วกดลิงก์`; S.loginErr = !!error; render();
 }
@@ -1466,51 +1472,58 @@ async function saveNewPassword(){
   S.loginMsg = ""; await startOwner(data.user);
 }
 document.addEventListener("click", ev => { if(ev.target.closest && ev.target.closest("[data-act=forgot]")) sendReset(); });
-document.addEventListener("click", ev => { const b = ev.target.closest && ev.target.closest("[data-act=togglePw]"); if(!b) return; const i = $("#lgPass"); if(!i) return; const show = i.type === "password"; i.type = show ? "text" : "password"; b.textContent = show ? "ซ่อน" : "แสดง"; b.setAttribute("aria-label", show ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"); });
+document.addEventListener("click", ev => { const b = ev.target.closest && ev.target.closest("[data-act=togglePw]"); if(!b) return; const i = $("#lgPass"); if(!i) return; const show = i.type === "password"; i.type = show ? "text" : "password"; b.innerHTML = show ? EYE_OFF : EYE_ON; b.setAttribute("aria-pressed", show); b.setAttribute("aria-label", show ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"); i.focus({preventScroll:true}); });
 document.addEventListener("submit", ev => { if(ev.target.id==="resetForm"){ ev.preventDefault(); saveNewPassword(); } });
+const EYE_ON = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>', EYE_OFF = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 3l18 18M10.6 5.1A10.8 10.8 0 0112 5c6.4 0 10 7 10 7a17 17 0 01-3.2 4.1M6.6 6.6A17.4 17.4 0 002 12s3.6 7 10 7a10 10 0 005.4-1.6M9.9 9.9a3 3 0 004.2 4.2"/></svg>';
 function viewLogin(){
   return `<div class="stack" style="max-width:420px;margin:24px auto 0">
     <div class="card"><h2 class="sec">เข้าสู่ระบบเจ้าของหอ</h2>
-      <div class="form">
-        <div><label class="small muted" for="mlEmail">อีเมลเจ้าของหอ</label><input class="inp" id="mlEmail" type="email" inputmode="email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="you@gmail.com" value="${esc(S.mlEmail||"")}"></div>
-        <button class="btn pri" type="button" data-act="magic">ส่งลิงก์เข้าระบบไปที่ Gmail</button>
-        ${S.loginMsg ? `<div class="verify ${S.loginErr?"bad":"ok"}">${esc(S.loginMsg)}</div>` : ""}
-        <p class="small muted" style="margin:0">เปิด Gmail แล้วกดลิงก์ในอีเมล ก็เข้าระบบได้ทันที ไม่ต้องใช้รหัสผ่าน</p>
-      </div>
-      <details class="pwbox"><summary>หรือเข้าด้วยรหัสผ่าน</summary>
       <form class="form" id="loginForm">
-        <div><label class="small muted" for="lgEmail">อีเมล</label><input class="inp" id="lgEmail" type="email" inputmode="email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required></div>
-        <div><label class="small muted" for="lgPass">รหัสผ่าน</label><div class="pwrow"><input class="inp" id="lgPass" type="password" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false" minlength="6" required><button class="btn pweye" type="button" data-act="togglePw" aria-label="แสดงรหัสผ่าน">แสดง</button></div></div>
+        <div><label class="small muted" for="lgEmail">อีเมล (Gmail) หรือ เบอร์มือถือ</label><input class="inp" id="lgEmail" type="text" inputmode="email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="you@gmail.com หรือ 0812345678" value="${esc(S.lgId||"")}" required></div>
+        <div><label class="small muted" for="lgPass">รหัสผ่าน</label><div class="pwwrap"><input class="inp" id="lgPass" type="password" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false" required><button class="eyebtn" type="button" data-act="togglePw" aria-label="แสดงรหัสผ่าน" aria-pressed="false">${EYE_ON}</button></div></div>
+        ${S.loginMsg ? `<div class="verify ${S.loginErr?"bad":"ok"}">${esc(S.loginMsg)}</div>` : ""}
         <button class="btn pri" type="submit" data-mode="in">เข้าสู่ระบบ</button>
-        <button class="btn ghost" type="submit" data-mode="up">สร้างบัญชีใหม่</button>
-        <button class="linkbtn" type="button" data-act="forgot" style="justify-self:center">ลืมรหัสผ่าน? ส่งลิงก์ตั้งรหัสใหม่ทางอีเมล</button>
-      </form></details></div>
+      </form>
+      <div class="ordiv"><span>หรือ ไม่ต้องใช้รหัสผ่าน</span></div>
+      <button class="btn" type="button" data-act="magic" style="width:100%">ส่งลิงก์เข้าระบบไปที่ Gmail</button>
+      <p class="small muted" style="margin:8px 0 0">กรอกอีเมลหรือเบอร์ด้านบน แล้วกดปุ่มนี้ ระบบส่งลิงก์ไปที่ Gmail ของเจ้าของหอ กดลิงก์ในอีเมลก็เข้าได้เลย</p>
+      <div style="text-align:center;margin-top:10px"><button class="linkbtn" type="button" data-act="forgot">ลืมรหัสผ่าน? ส่งลิงก์ตั้งรหัสใหม่ทางอีเมล</button></div>
+    </div>
     <div class="card"><h2 class="sec">สำหรับลูกบ้าน</h2><p class="small muted" style="margin:0 0 10px">เช็กบิล จ่ายเงิน ส่งสลิป พิมพ์ใบเสร็จ และแจ้งซ่อม ด้วย Apartment ID ไม่ต้องสมัครสมาชิก</p><button class="btn" data-act="goTenant">ไปหน้าลูกบ้าน</button></div>
   </div>`;
 }
+function blurActive(){ if(document.activeElement && document.activeElement.blur) document.activeElement.blur(); }
+function readId(){ const v = (($("#lgEmail") && $("#lgEmail").value) || "").trim(); S.lgId = v; return v; }
+/* email or Thai mobile number -> the owner's login email */
+async function resolveLoginEmail(id){
+  if(!id) return {error:"กรอกอีเมลหรือเบอร์มือถือก่อน"};
+  if(id.includes("@")) return {email: id.toLowerCase()};
+  const digits = id.replace(/\D/g, "");
+  if(digits.length < 9) return {error:"เบอร์มือถือไม่ถูกต้อง"};
+  const { data, error } = await sb.rpc("dorm_login_email", {p_id: digits});
+  if(error) return {error:"ยังไม่ได้ตั้งเบอร์มือถือสำหรับเข้าระบบ ใช้อีเมลแทนไปก่อน"};
+  if(!data) return {error:"ไม่พบเบอร์นี้ ตรวจเบอร์อีกครั้ง หรือใช้อีเมลแทน"};
+  return {email: data};
+}
 async function sendMagic(){
-  const email = (($("#mlEmail") && $("#mlEmail").value) || "").trim().toLowerCase();
-  if(!email){ if(document.activeElement && document.activeElement.blur) document.activeElement.blur(); S.loginMsg = "กรอกอีเมลก่อน"; S.loginErr = true; return render(); }
-  if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
-  S.loginMsg = "กำลังส่ง…"; S.loginErr = false; S.mlEmail = email; render();
-  const { error } = await sb.auth.signInWithOtp({email, options:{emailRedirectTo: location.origin + location.pathname, shouldCreateUser:false}});
+  blurActive();
+  const r = await resolveLoginEmail(readId());
+  if(r.error){ S.loginMsg = r.error; S.loginErr = true; return render(); }
+  S.loginMsg = "กำลังส่ง…"; S.loginErr = false; render();
+  const { error } = await sb.auth.signInWithOtp({email: r.email, options:{emailRedirectTo: location.origin + location.pathname, shouldCreateUser:false}});
   if(error){ S.loginMsg = /rate|seconds|too many/i.test(error.message) ? "ส่งบ่อยเกินไป รอประมาณ 1 นาทีแล้วลองใหม่" : /not found|signups not allowed|user/i.test(error.message) ? "ไม่พบบัญชีนี้ ตรวจอีเมลอีกครั้ง" : error.message; S.loginErr = true; return render(); }
-  S.loginMsg = `ส่งลิงก์ไปที่ ${email} แล้ว เปิด Gmail แล้วกดลิงก์ “Log In” ในอีเมล (ถ้าไม่เห็น ดูในสแปม)`; S.loginErr = false; render();
+  S.loginMsg = `ส่งลิงก์ไปที่ ${r.email.replace(/^(.{3}).*(@.*)$/, "$1•••$2")} แล้ว เปิด Gmail แล้วกดลิงก์ “Log In” (ถ้าไม่เห็น ดูในสแปม)`; S.loginErr = false; render();
 }
 document.addEventListener("click", ev => { if(ev.target.closest && ev.target.closest("[data-act=magic]")) sendMagic(); });
-async function signInGoogle(){
-  S.loginMsg = "กำลังไปหน้า Google…"; S.loginErr = false; render();
-  const { error } = await sb.auth.signInWithOAuth({provider:"google", options:{redirectTo: location.origin + location.pathname, queryParams:{prompt:"select_account"}}});
-  if(error){ S.loginMsg = /not enabled|provider/i.test(error.message) ? "ยังไม่ได้เปิดใช้การเข้าสู่ระบบด้วย Google ใน Supabase" : error.message; S.loginErr = true; render(); }
-}
-document.addEventListener("click", ev => { if(ev.target.closest && ev.target.closest("[data-act=google]")) signInGoogle(); });
-async function doLogin(mode){
-  const email = $("#lgEmail").value.trim().toLowerCase(), password = $("#lgPass").value.replace(/^\s+|\s+$/g, "");
-  if(!email || password.length < 6) { S.loginMsg = "กรอกอีเมลและรหัสผ่านอย่างน้อย 6 ตัว"; S.loginErr = true; return render(); }
-  S.loginMsg = "กำลังตรวจสอบ…"; S.loginErr = false; document.activeElement.blur(); render();
-  const res = mode==="up" ? await sb.auth.signUp({email, password}) : await sb.auth.signInWithPassword({email, password});
-  if(res.error){ S.loginMsg = /invalid/i.test(res.error.message) ? "อีเมลหรือรหัสผ่านไม่ถูกต้อง กด “แสดง” เพื่อเช็กรหัสที่พิมพ์ หรือกด “ลืมรหัสผ่าน”" : /rate|too many/i.test(res.error.message) ? "ลองเข้าบ่อยเกินไป รอสักครู่แล้วลองใหม่" : /fetch|network/i.test(res.error.message) ? "เชื่อมต่ออินเทอร์เน็ตไม่ได้ ลองใหม่อีกครั้ง" : /registered/i.test(res.error.message) ? "อีเมลนี้มีบัญชีแล้ว กดเข้าสู่ระบบ" : /confirm/i.test(res.error.message) ? "ยังไม่ได้ยืนยันอีเมล เปิดอีเมลแล้วกดลิงก์ยืนยันก่อน" : res.error.message; S.loginErr = true; return render(); }
-  if(mode==="up" && !res.data.session){ S.loginMsg = "สร้างบัญชีแล้ว เปิดอีเมลเพื่อยืนยัน แล้วกลับมาเข้าสู่ระบบ"; S.loginErr = false; return render(); }
+async function doLogin(){
+  blurActive();
+  const password = ($("#lgPass").value || "").replace(/^\s+|\s+$/g, "");
+  const r = await resolveLoginEmail(readId());
+  if(r.error){ S.loginMsg = r.error; S.loginErr = true; return render(); }
+  if(!password){ S.loginMsg = "กรอกรหัสผ่าน"; S.loginErr = true; return render(); }
+  S.loginMsg = "กำลังตรวจสอบ…"; S.loginErr = false; render();
+  const res = await sb.auth.signInWithPassword({email: r.email, password});
+  if(res.error){ S.loginMsg = /invalid/i.test(res.error.message) ? "รหัสผ่านไม่ถูกต้อง กดรูปตาเพื่อเช็กสิ่งที่พิมพ์ หรือใช้ “ส่งลิงก์เข้าระบบไปที่ Gmail”" : /rate|too many/i.test(res.error.message) ? "ลองเข้าบ่อยเกินไป รอสักครู่แล้วลองใหม่" : /fetch|network/i.test(res.error.message) ? "เชื่อมต่ออินเทอร์เน็ตไม่ได้ ลองใหม่อีกครั้ง" : /confirm/i.test(res.error.message) ? "บัญชียังไม่ได้ยืนยันอีเมล ใช้ “ส่งลิงก์เข้าระบบไปที่ Gmail” แทน" : res.error.message; S.loginErr = true; return render(); }
   await startOwner(res.data.session.user);
 }
 let loadTimer = null;
