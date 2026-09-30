@@ -1,0 +1,1592 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0E5A4C">
+<title>หอพักจดง่าย · ห้าดาว</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+*{box-sizing:border-box} html{color-scheme:light} :root{padding-top:env(safe-area-inset-top,0px)} body{margin:0} img{max-width:100%} [hidden]{display:none!important}
+/* Layout: mobile app shell — sticky month header, room-board grid by floor, fixed bottom tab bar; bottom sheet for details */
+:root{
+  --bg:#EEF2F0; --surface:#FFFFFF; --sunk:#F5F8F6; --ink:#15221E; --muted:#5A6B65; --line:#D7E0DC;
+  --accent:#0E5A4C; --accent-ink:#FFFFFF; --accent-soft:#DDEDE8;
+  --paid:#F6C627; --paid-ink:#3B2C00; --paid-soft:#FFF4C9;
+  --unpaid:#D63B33; --unpaid-ink:#FFFFFF; --unpaid-soft:#FBE3E1;
+  --warn:#B86A00; --ok:#1B7A45;
+  --display:"Anuphan","IBM Plex Sans Thai",system-ui,sans-serif;
+  --body:"IBM Plex Sans Thai","Anuphan",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E1412; --surface:#16201D; --sunk:#111916; --ink:#E6EEEA; --muted:#94A49F; --line:#27352F;
+  --accent:#4FC0A5; --accent-ink:#06201A; --accent-soft:#173630;
+  --paid:#E8B917; --paid-ink:#2A1F00; --paid-soft:#3A3113;
+  --unpaid:#E0473F; --unpaid-ink:#FFFFFF; --unpaid-soft:#3D1D1B;
+  --warn:#F0A63A; --ok:#5BD08E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1412; --surface:#16201D; --sunk:#111916; --ink:#E6EEEA; --muted:#94A49F; --line:#27352F;
+  --accent:#4FC0A5; --accent-ink:#06201A; --accent-soft:#173630;
+  --paid:#E8B917; --paid-ink:#2A1F00; --paid-soft:#3A3113;
+  --unpaid:#E0473F; --unpaid-ink:#FFFFFF; --unpaid-soft:#3D1D1B;
+  --warn:#F0A63A; --ok:#5BD08E; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;-webkit-tap-highlight-color:transparent}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;line-height:1.25}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.wrap{max-width:1040px;margin:0 auto;padding-inline:16px}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
+header.top .wrap{display:flex;align-items:center;gap:12px;padding-block:10px;flex-wrap:wrap}
+.brand{flex:1;min-width:0}
+.brand h1{font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand small{color:var(--muted);font-size:12px}
+.monthsw{display:flex;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:999px}
+.monthsw button{border:0;background:none;width:36px;height:36px;border-radius:999px;cursor:pointer;font-size:18px;color:var(--muted)}
+.monthsw button:hover{background:var(--sunk);color:var(--ink)}
+.monthsw span{font-family:var(--display);font-weight:600;font-size:14px;min-width:112px;text-align:center}
+main{padding-block:16px 110px}
+.demo{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--accent-soft);border-radius:var(--r);padding:10px 14px;font-size:13px;margin-bottom:14px}
+.demo b{font-family:var(--display)}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+nav.tabs .wrap{display:grid;grid-template-columns:repeat(6,1fr);padding-inline:2px}
+nav.tabs button{border:0;background:none;padding:8px 2px 9px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11.5px;color:var(--muted);cursor:pointer}
+nav.tabs button svg{width:22px;height:22px}
+nav.tabs button[aria-current="page"]{color:var(--accent);font-weight:600}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:9px 14px;cursor:pointer;font-weight:500;min-height:40px}
+.btn:hover{border-color:var(--muted)}
+.btn.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.red{background:var(--unpaid);color:var(--unpaid-ink);border-color:var(--unpaid)}
+.btn.yel{background:var(--paid);color:var(--paid-ink);border-color:var(--paid)}
+.btn.ghost{background:none}
+.btn.sm{min-height:32px;padding:5px 10px;font-size:13px}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.btn[data-armed]{background:var(--unpaid);color:var(--unpaid-ink);border-color:var(--unpaid)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.label{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+/* summary */
+.summary{display:grid;gap:12px;margin-bottom:16px}
+.collect .big{font-family:var(--mono);font-size:26px;font-weight:600;font-variant-numeric:tabular-nums}
+.bar{height:8px;border-radius:99px;background:var(--unpaid-soft);overflow:hidden;margin-top:8px}
+.bar i{display:block;height:100%;background:var(--paid)}
+.bar.split{display:flex}
+.bar.split i.c{background:repeating-linear-gradient(135deg,var(--paid) 0 5px,var(--paid-soft) 5px 8px)}
+.paysplit{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.pay{display:flex;gap:10px;align-items:flex-start;text-align:left;border:1px solid var(--line);background:var(--sunk);border-radius:9px;padding:9px 11px;cursor:pointer;min-width:0}
+.pay[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.pay > span:last-child{display:grid;min-width:0}
+.pay b{font-size:16px}
+.pay small{color:var(--muted);font-size:12px}
+.sw{width:14px;height:14px;border-radius:3px;flex:none;margin-top:3px}
+.sw.sx{background:var(--paid)} .sw.sc{background:repeating-linear-gradient(135deg,var(--paid) 0 3px,var(--paid-soft) 3px 5px);box-shadow:inset 0 0 0 1px var(--paid)}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:13px;cursor:pointer}
+.chip[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.dot{width:10px;height:10px;border-radius:3px;display:inline-block;flex:none}
+.dot.p{background:var(--paid)} .dot.u{background:var(--unpaid)} .dot.k{background:var(--unpaid);box-shadow:inset 0 0 0 2px var(--paid)} .dot.n{border:1.5px dashed var(--muted)} .dot.v{background:repeating-linear-gradient(45deg,var(--line) 0 2px,transparent 2px 4px);border:1px solid var(--line)}
+/* board */
+.floor{margin-bottom:18px}
+.floor h3{font-size:14px;color:var(--muted);font-weight:600;margin-bottom:8px}
+.board{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px}
+.room{position:relative;border-radius:10px;padding:10px 10px 9px;text-align:left;cursor:pointer;border:1.5px solid transparent;min-height:98px;display:flex;flex-direction:column;gap:2px;transition:transform .12s}
+.room:hover{transform:translateY(-1px)}
+.room .no{font-family:var(--mono);font-size:21px;font-weight:600;line-height:1.1}
+.room .who{font-size:12px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.room .amt{margin-top:auto;font-family:var(--mono);font-size:13px;font-weight:600}
+.room .tag{position:absolute;top:8px;right:8px;font-size:10.5px;font-weight:600;border-radius:5px;padding:1px 5px}
+.room.paid{background:var(--paid);color:var(--paid-ink)}
+.room.paid .tag{background:rgba(0,0,0,.12)}
+.room.unpaid{background:var(--unpaid);color:var(--unpaid-ink)}
+.room.unpaid .tag{background:rgba(255,255,255,.22)}
+.room.pending{background:var(--unpaid);color:var(--unpaid-ink);border-color:var(--paid);box-shadow:inset 0 0 0 2px var(--paid)}
+.room.pending .tag{background:var(--paid);color:var(--paid-ink)}
+.room.none{background:var(--surface);border:1.5px dashed var(--muted);color:var(--ink)}
+.room.none .amt{color:var(--muted);font-family:var(--body);font-weight:500}
+.room.vacant{background:repeating-linear-gradient(45deg,var(--sunk) 0 6px,var(--surface) 6px 12px);border-color:var(--line);color:var(--muted)}
+@media (prefers-reduced-motion:reduce){.room{transition:none}}
+/* meter */
+.meters{display:grid;gap:10px}
+.mrow{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:grid;gap:10px}
+.mrow.done{border-left:4px solid var(--ok)}
+.mrow.locked{opacity:.7}
+.mhead{display:flex;align-items:baseline;gap:10px}
+.mhead .no{font-family:var(--mono);font-size:20px;font-weight:600}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+.field .prev{font-size:12px;color:var(--muted)}
+input.inp,select.inp,textarea.inp{width:100%;border:1px solid var(--line);background:var(--sunk);border-radius:8px;padding:9px 11px;min-height:42px}
+input.meter{font-family:var(--mono);font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:.02em}
+input.inp:focus,select.inp:focus,textarea.inp:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.mcalc{font-size:13px;display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center}
+.mcalc b{font-family:var(--mono)}
+.err{color:var(--unpaid);font-size:13px}
+.linkbtn{border:0;background:none;padding:0 2px;color:var(--accent);font-size:12px;text-decoration:underline;cursor:pointer}
+.prevedit{display:flex;align-items:center;gap:6px;margin-top:4px}
+.prevedit label{margin:0;white-space:nowrap}
+.prevedit .inp{min-height:32px;padding:4px 8px;font-size:14px;width:100%;background:var(--paid-soft);border-color:var(--paid)}
+.inrow{display:flex;gap:6px;align-items:stretch}
+.inrow .inp{flex:1;min-width:0}
+.cam{position:relative;display:inline-grid;place-items:center;width:46px;flex:none;border:1px solid var(--line);background:var(--surface);border-radius:8px;cursor:pointer;color:var(--accent)}
+.cam:hover{border-color:var(--accent)}
+.cam svg{width:22px;height:22px}
+.cam input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
+.mph{display:flex;gap:8px;align-items:center;margin-top:6px;font-size:12px}
+.mph img{width:52px;height:52px;object-fit:cover;border-radius:6px;border:1px solid var(--line);cursor:zoom-in;flex:none}
+.mph .ok{color:var(--ok)} .mph .warn{color:var(--warn)}
+.photos{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.photos figure{margin:0;display:grid;gap:4px}
+.photos img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px;border:1px solid var(--line);cursor:zoom-in;max-width:100%}
+.photos img.big{aspect-ratio:auto;object-fit:contain;cursor:zoom-out}
+.photos figure:has(img.big){grid-column:1/-1}
+.photos figcaption{font-size:12px;color:var(--muted)}
+.progress{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.progress .bar{flex:1;margin:0;background:var(--line)}
+.progress .bar i{background:var(--ok)}
+/* sheet */
+.overlay{position:fixed;inset:0;background:rgba(10,20,17,.45);z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--surface);width:100%;max-width:560px;max-height:90%;overflow:auto;border-radius:16px 16px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom,0px))}
+@media (min-width:700px){.overlay{align-items:center}.sheet{border-radius:16px;max-height:86%}}
+.sheet .grab{width:40px;height:4px;border-radius:9px;background:var(--line);margin:0 auto 10px}
+.shead{display:flex;gap:10px;align-items:flex-start;margin-bottom:12px}
+.shead .no{font-family:var(--mono);font-size:28px;font-weight:600;line-height:1}
+.x{margin-left:auto;border:0;background:var(--sunk);width:34px;height:34px;border-radius:99px;cursor:pointer;font-size:18px;flex:none}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 10px;font-size:12.5px;font-weight:600}
+.pill.paid{background:var(--paid);color:var(--paid-ink)} .pill.unpaid{background:var(--unpaid);color:var(--unpaid-ink)} .pill.pending{background:var(--paid-soft);color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--paid)} .pill.none{background:var(--sunk);color:var(--muted)}
+table.bill{width:100%;border-collapse:collapse;font-size:14px}
+table.bill td{padding:7px 0;border-bottom:1px solid var(--line);vertical-align:top}
+table.bill td:last-child{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap;padding-left:10px}
+table.bill td small{display:block;color:var(--muted);font-size:12px}
+table.bill tr.total td{border-bottom:0;font-weight:600;font-size:17px;padding-top:10px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:13.5px}
+.kv dt{color:var(--muted)} .kv dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.aptid{font-family:var(--mono);font-weight:600;background:var(--sunk);border:1px dashed var(--line);border-radius:6px;padding:1px 7px}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.actions .full{grid-column:1/-1}
+.sect{margin-top:16px;display:grid;gap:10px}
+.qrbox{display:grid;justify-items:center;gap:6px;background:#FFFFFF;color:#111;border-radius:12px;padding:14px;border:1px solid var(--line)}
+.qrbox canvas{width:220px;height:220px;image-rendering:pixelated;max-width:100%}
+.qrbox .pp{font-weight:700;color:#0B3D66;font-family:var(--display);letter-spacing:.02em}
+.qrimg{width:240px;max-width:100%;height:auto;border-radius:6px}
+.bankline{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:var(--sunk);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-top:8px}
+.qrset{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}
+.qrset img,.qrset .qrph{width:130px;height:130px;object-fit:contain;border-radius:8px;border:1px solid var(--line);background:#FFFFFF;flex:none}
+.qrset .qrph{display:grid;place-items:center;font-size:12px;color:var(--muted);background:var(--sunk)}
+.rcwrap{overflow:hidden;border:1px solid var(--line);border-radius:8px;background:#FFFFFF;width:100%;aspect-ratio:560/780;position:relative}
+.rcscale{position:absolute;top:0;left:0;transform-origin:0 0}
+.rcchk{width:20px;height:20px;accent-color:var(--accent);flex:none}
+.slipimg{max-height:420px;width:auto;border-radius:8px;border:1px solid var(--line);display:block;margin:0 auto}
+.verify{border-radius:8px;padding:10px 12px;font-size:13.5px;background:var(--sunk)}
+.verify.ok{background:var(--paid-soft)} .verify.bad{background:var(--unpaid-soft)}
+.upload{display:grid;place-items:center;gap:4px;border:2px dashed var(--line);border-radius:12px;padding:18px;text-align:center;cursor:pointer;background:var(--sunk)}
+.upload:hover{border-color:var(--accent)}
+.upload input{position:absolute;width:1px;height:1px;opacity:0}
+/* report */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.kpi .v{font-family:var(--mono);font-size:21px;font-weight:600;font-variant-numeric:tabular-nums;margin-top:2px}
+.kpi .v.pos{color:var(--ok)} .kpi .v.neg{color:var(--unpaid)}
+.twocol{display:grid;gap:14px}
+@media (min-width:820px){.twocol{grid-template-columns:1.3fr 1fr}}
+.twocol > *,.kpis > *,.tcols > *,.setgrid > *,.summary > *{min-width:0}
+.chartwrap{overflow-x:auto}
+.chart text{fill:var(--muted);font-family:var(--body);font-size:11px}
+.chart .gl{stroke:var(--line)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:6px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.brk{display:grid;gap:8px}
+.brk .l{display:flex;justify-content:space-between;font-size:13.5px}
+.brk .t{height:6px;border-radius:9px;background:var(--sunk);overflow:hidden}
+.brk .t i{display:block;height:100%;background:var(--accent)}
+.list{display:grid}
+.li{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+.li:last-child{border-bottom:0}
+.li .grow{flex:1;min-width:0}
+.li .amt{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.form{display:grid;gap:10px}
+.form .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media (max-width:420px){.form .g3{grid-template-columns:1fr 1fr}}
+.stack{display:grid;gap:14px}
+h2.sec{font-size:17px;margin-bottom:10px}
+.empty{text-align:center;padding:36px 16px;display:grid;gap:10px;justify-items:center}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;z-index:60;max-width:calc(100% - 32px)}
+.steps{display:flex;gap:6px;font-size:12px}
+.steps span{flex:1;text-align:center;padding:6px 4px;border-radius:7px;background:var(--sunk);color:var(--muted)}
+.steps span.on{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.hist{display:flex;gap:6px;flex-wrap:wrap}
+.hist span{font-size:12px;border-radius:6px;padding:3px 8px}
+.hist .p{background:var(--paid);color:var(--paid-ink)} .hist .u{background:var(--unpaid);color:var(--unpaid-ink)} .hist .k{background:var(--paid-soft)}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:99px;animation:sp 0.8s linear infinite;vertical-align:-2px}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* view toggle + table */
+.filters{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:none;padding:6px 12px;font-size:13px;cursor:pointer;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.tablewrap{overflow-x:auto}
+table.rt{width:100%;border-collapse:collapse;font-size:13.5px;min-width:860px}
+table.rt th{position:sticky;top:0;background:var(--sunk);text-align:left;font-weight:600;font-size:12px;color:var(--muted);padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.rt td{padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.rt .n{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+table.rt td.t{max-width:200px;overflow:hidden;text-overflow:ellipsis}
+table.rt tbody tr{cursor:pointer}
+table.rt tbody tr:hover{background:var(--accent-soft)}
+table.rt tfoot td{font-weight:600;background:var(--sunk);border-bottom:0}
+.navbrand{display:none}
+.tcols,.setgrid{display:grid;gap:14px}
+
+/* ---------- desktop ---------- */
+@media (min-width:900px){
+  body{padding-left:232px}
+  .wrap{max-width:1240px;padding-inline:28px}
+  header.top .wrap{padding-block:14px}
+  .brand h1{font-size:22px}
+  main{padding-block:22px 48px}
+  nav.tabs{top:0;right:auto;width:232px;border-top:0;border-right:1px solid var(--line);padding:calc(18px + env(safe-area-inset-top,0px)) 0 18px}
+  nav.tabs .wrap{display:flex;flex-direction:column;gap:2px;padding-inline:12px;height:100%}
+  .navbrand{display:grid;gap:2px;padding:4px 12px 18px;margin-bottom:8px;border-bottom:1px solid var(--line)}
+  .navbrand b{font-family:var(--display);font-size:17px;color:var(--accent)}
+  .navbrand span{font-size:12.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  nav.tabs button{flex-direction:row;justify-content:flex-start;gap:12px;font-size:14.5px;padding:10px 12px;border-radius:9px}
+  nav.tabs button:hover{background:var(--sunk);color:var(--ink)}
+  nav.tabs button[aria-current="page"]{background:var(--accent-soft)}
+  .summary{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);align-items:start}
+  .summary .filters{flex-direction:column;align-items:stretch;height:100%}
+  .summary .filters .seg{align-self:flex-start}
+  .board{grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:12px}
+  .room{min-height:112px;padding:12px}
+  .room .no{font-size:24px}
+  .meters{grid-template-columns:repeat(auto-fill,minmax(440px,1fr))}
+  .tenantv{max-width:1100px}
+  .tcols{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);align-items:start}
+  .setgrid{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);align-items:start}
+  .setgrid > .card.acct, .setgrid > .card.acct + .card:not(.setmain){grid-column:1/-1}
+  .setgrid .setmain{grid-row:span 2}
+  .overlay{justify-content:flex-end;align-items:stretch}
+  .sheet{max-width:520px;max-height:none;height:100%;border-radius:0;padding:22px 24px 28px;box-shadow:-12px 0 32px rgba(0,0,0,.18)}
+  .sheet .grab{display:none}
+  .toast{bottom:24px;left:calc(50% + 116px)}
+}
+@media (min-width:1400px){ .tenantv .tcols{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr)} }
+
+/* ---------- phone polish ---------- */
+.mrow.mini{padding:10px 14px;gap:4px}
+.mrow.mini .no{font-size:17px}
+@media (max-width:560px){
+  header.top .wrap{gap:8px;padding-block:8px}
+  .brand h1{font-size:17px}
+  .brand small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11.5px}
+  .monthsw span{min-width:96px;font-size:13px}
+  .monthsw button{width:32px;height:32px}
+  .summary .chips{flex-wrap:nowrap;overflow-x:auto;margin-inline:-16px;padding-inline:16px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .summary .chips::-webkit-scrollbar{display:none}
+  .summary .chip{flex:none}
+  .collect .big{font-size:23px}
+  .demo{padding:8px 12px;font-size:12.5px}
+  .kpi .v{font-size:18px}
+  .board{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .room{min-height:92px;padding:9px 9px 8px}
+  .room .no{font-size:19px}
+  .room .tag{top:6px;right:6px;font-size:10px}
+  .mgrid{gap:8px}
+  input.meter{font-size:18px;padding-inline:9px}
+  .actions{grid-template-columns:1fr 1fr}
+}
+@media (max-width:360px){ .board{grid-template-columns:repeat(2,minmax(0,1fr))} .paysplit{grid-template-columns:1fr} }
+
+/* repairs */
+.navicon{position:relative;display:inline-grid}
+.badge{position:absolute;top:-4px;right:-9px;min-width:17px;height:17px;border-radius:99px;background:var(--unpaid);color:var(--unpaid-ink);font-size:10.5px;font-style:normal;font-weight:700;display:grid;place-items:center;padding:0 4px;font-family:var(--mono)}
+.scrollchips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+.scrollchips .chip{flex:none}
+.rgrid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+.rgrid.one{grid-template-columns:1fr}
+.rcard{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--line);border-radius:var(--r);padding:12px 14px;display:grid;gap:8px;min-width:0}
+.rcard[data-act]{cursor:pointer}
+.rcard[data-act]:hover{border-color:var(--muted)}
+.rcard.st-new{border-left-color:var(--unpaid)} .rcard.st-scheduled{border-left-color:var(--paid)} .rcard.st-done{border-left-color:var(--ok)} .rcard.st-cancelled{opacity:.6}
+.rgrid.one .rcard{background:var(--sunk)}
+.rtop{display:flex;gap:10px;align-items:flex-start}
+.rno{font-size:20px;font-weight:600;line-height:1.1}
+.rcat{font-family:var(--display);font-weight:600;font-size:15px}
+.rnote{margin:0;font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere}
+.rpill{display:inline-flex;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:600;white-space:nowrap;flex:none}
+.rpill.new{background:var(--unpaid-soft);color:var(--unpaid)} .rpill.scheduled{background:var(--paid-soft);color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--paid)} .rpill.done{background:var(--accent-soft);color:var(--ok)} .rpill.cancelled{background:var(--sunk);color:var(--muted)}
+.rdates{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:0;background:var(--sunk);border-radius:8px;padding:8px 10px}
+.rgrid.one .rdates{background:var(--surface)}
+.rdates dt{font-size:11px;color:var(--muted)} .rdates dd{margin:0;font-size:13px;font-weight:600}
+.rowner{font-size:13px;background:var(--accent-soft);border-radius:8px;padding:7px 10px;overflow-wrap:anywhere}
+.rph img{width:88px;height:88px;object-fit:cover;border-radius:8px;border:1px solid var(--line);cursor:zoom-in}
+.rph.big img{width:100%;height:auto;max-height:320px;object-fit:contain;margin-top:8px}
+textarea.inp{resize:vertical;min-height:80px}
+@media (max-width:560px){ nav.tabs button{font-size:10.5px} nav.tabs button svg{width:21px;height:21px} .rgrid{grid-template-columns:1fr} }
+
+body.nonav nav.tabs{display:none}
+.pwwrap{position:relative}
+.pwwrap .inp{padding-right:52px;width:100%}
+.eyebtn{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:44px;height:40px;border:0;background:none;color:var(--muted);cursor:pointer;display:grid;place-items:center;border-radius:8px}
+.eyebtn:hover,.eyebtn[aria-pressed="true"]{color:var(--accent)}
+.pwbox{margin-top:16px;border-top:1px solid var(--line);padding-top:12px}
+.pwbox summary{cursor:pointer;color:var(--muted);font-size:13.5px;margin-bottom:10px}
+#mlEmail{font-size:16px}
+.pwrow{display:flex;gap:6px}
+.pwrow .inp{flex:1;min-width:0}
+.pweye{flex:none;min-width:64px}
+#lgEmail,#lgPass,#rpPass,#aptIn{font-size:16px}
+.gbtn{width:100%;gap:10px;background:#FFFFFF;color:#1F1F1F;border-color:#DADCE0;font-weight:600}
+.gbtn:hover{border-color:#9AA0A6}
+.ordiv{display:flex;align-items:center;gap:10px;margin:14px 0 10px;color:var(--muted);font-size:12.5px}
+.ordiv::before,.ordiv::after{content:"";flex:1;height:1px;background:var(--line)}
+body.nonav main{padding-bottom:40px}
+body.nonav .monthsw{display:none}
+@media (min-width:900px){ body.nonav{padding-left:0} body.nonav .toast{left:50%} }
+</style>
+</head>
+<body>
+
+<header class="top"><div class="wrap">
+  <div class="brand"><h1 id="dormName">หอพัก</h1><small id="subline">บิลประจำเดือน</small></div>
+  <div class="monthsw"><button id="mPrev" aria-label="เดือนก่อน">‹</button><span id="mLabel"></span><button id="mNext" aria-label="เดือนถัดไป">›</button></div>
+</div></header>
+
+<main class="wrap" id="main"><div class="empty"><span class="spin"></span><span class="muted">กำลังโหลดข้อมูลหอพัก…</span></div></main>
+
+<nav class="tabs" aria-label="เมนูหลัก"><div class="wrap"><div class="navbrand"><b>หอพักจดง่าย</b><span id="navDorm"></span></div>
+  <button data-tab="rooms"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/></svg>ผังห้อง</button>
+  <button data-tab="meter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="13" r="8"/><path d="M12 13l4-4M8 4.5V3h8v1.5"/></svg>จดมิเตอร์</button>
+  <button data-tab="report"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>รายงาน</button>
+  <button data-tab="tenant"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM20 14v1M14 20h1M18 18h3v3"/></svg>ลูกบ้าน</button>
+  <button data-tab="repair"><span class="navicon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14.7 6.3a4 4 0 00-5.2 5.2L3.8 17.2a1.9 1.9 0 002.7 2.7l5.7-5.7a4 4 0 005.2-5.2l-2.5 2.5-2.4-.3-.3-2.4z"/></svg><i class="badge" id="repBadge" hidden></i></span>แจ้งซ่อม</button>
+  <button data-tab="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>ตั้งค่า</button>
+</div></nav>
+
+<div id="sheetRoot"></div>
+<div id="toastRoot"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+"use strict";
+/* ---------- Supabase config (publishable key: safe to expose, access is enforced by Row Level Security) ---------- */
+const SUPABASE_URL = "https://orldpdisplmplxrrqaan.supabase.co";
+const SUPABASE_KEY = "sb_publishable_itI08GLNvUvugxT5oA7QUg_OXOdU3IQ";
+const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const r2 = n => Math.round((Number(n)||0) * 100) / 100;
+const baht = n => { const v = r2(n); return "฿" + v.toLocaleString("th-TH", {minimumFractionDigits: Number.isInteger(v)?0:2, maximumFractionDigits:2}); };
+const nf = n => (Number(n)||0).toLocaleString("th-TH");
+const pad = n => String(n).padStart(2,"0");
+const monthKey = d => d.getFullYear() + "-" + pad(d.getMonth()+1);
+const addMonth = (k, n) => { const [y,m] = k.split("-").map(Number); return monthKey(new Date(y, m-1+n, 1)); };
+const monthTH = (k, short) => { const [y,m] = k.split("-").map(Number); return new Intl.DateTimeFormat("th-TH", {month: short?"short":"long", year: short?"2-digit":"numeric"}).format(new Date(y, m-1, 1)); };
+const dateTH = iso => iso ? new Intl.DateTimeFormat("th-TH",{day:"numeric",month:"short",year:"2-digit",hour:"2-digit",minute:"2-digit"}).format(new Date(iso)) : "-";
+const billId = (m, room) => m + "_" + room;
+const invNo = b => "INV-" + b.month.slice(2).replace("-","") + "-" + b.room;
+const cleanRoom = s => String(s||"").trim().replace(/[^A-Za-z0-9-]/g,"").slice(0,12);
+
+/*DEMO-START*/
+function buildDemo(endMonth){
+  let seed = 20260930;
+  const rnd = () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  const ri = (a,b) => a + Math.floor(rnd()*(b-a+1));
+  const settings = {name:"บ้านสวนแมนชั่น", promptpay:"0812345678", accountName:"นายตัวอย่าง ใจดี", waterRate:18, waterMin:100, elecRate:7, trash:40, dueDay:5, prefix:"BSM", demo:true};
+  const names = ["สมชาย ใจดี","กนกพร ศรีสุข","ธนวัฒน์ แก้วมณี","พิมพ์ชนก ทองคำ","อรรถพล มีสุข",null,"ณัฐธิดา วงศ์ใหญ่","วีรยุทธ บุญมา","ศิริพร จันทร์เพ็ญ","ภานุวัฒน์ ดีงาม","ชลธิชา สายทอง","กิตติศักดิ์ ใจเย็น"];
+  const nos = ["101","102","103","104","105","106","201","202","203","204","205","206"];
+  const code = ["K7Q2","M3XD","P9RA","T2LW","H8VN","C4ZB","R6YE","F5JU","W3KP","N7GS","B2QH","D9TX"];
+  const rooms = {}, bills = {}, expenses = {};
+  nos.forEach((no,i) => {
+    rooms[no] = {no, floor:Number(no[0]), tenant:names[i]||"", phone:names[i]?("08"+ri(10000000,99999999)):"", rent:[3500,3500,3800,3800,4200,3500,3500,3800,3800,4200,4200,4500][i], vacant:!names[i], aptId:"BSM-"+no+"-"+code[i], waterStart:1200+i*37, elecStart:8000+i*411, moveIn:"2025-0"+(1+i%8)+"-01", demo:true};
+  });
+  const months = []; for(let k=5;k>=0;k--) months.push(addMonth(endMonth,-k));
+  const occ = nos.filter(n => !rooms[n].vacant);
+  const plan = ["auto","cash","unpaid","auto","pending","none","manual","unpaid","cash","none","unpaid"];
+  occ.forEach((no,oi) => {
+    let w = rooms[no].waterStart, e = rooms[no].elecStart;
+    months.forEach((m,mi) => {
+      const last = mi === months.length-1;
+      const st = last ? plan[oi] : (["auto","cash","auto","manual"][ri(0,3)]);
+      if(st === "none") return;
+      const wu = ri(4,12), eu = ri(90,260);
+      const water = Math.max(r2(wu*settings.waterRate), settings.waterMin), elec = r2(eu*settings.elecRate);
+      const other = (oi===2 && last) ? 150 : 0;
+      const total = r2(rooms[no].rent + water + elec + settings.trash + other);
+      const b = {id:billId(m,no), month:m, room:no, rent:rooms[no].rent, waterPrev:w, waterCurr:w+wu, elecPrev:e, elecCurr:e+eu, waterUnits:wu, elecUnits:eu, waterRate:settings.waterRate, waterMin:settings.waterMin, elecRate:settings.elecRate, water, elec, trash:settings.trash, other, otherNote: other?"ค่าซ่อมก๊อกน้ำ":"", total, status:"unpaid", readAt:m+"-2"+ri(5,8)+"T19:"+pad(ri(0,59))+":00+07:00", demo:true};
+      if(st==="auto"||st==="cash"||st==="manual"){
+        const pd = addMonth(m,1)+"-0"+ri(1,5)+"T"+pad(ri(8,21))+":"+pad(ri(0,59))+":00+07:00";
+        Object.assign(b,{status:"paid", method: st==="cash"?"cash":"transfer", paidAt: pd,
+          verify: st==="auto" ? {state:"auto-ok", amount:total, ref:"DEMO"+m.replace("-","")+no, bank:"ตัวอย่าง", note:"ยอดตรงกับบิล"} : (st==="manual"?{state:"owner-ok", note:"เจ้าของอนุมัติ"}:null)});
+        if(last) b.paidAt = m+"-29T"+pad(ri(8,21))+":"+pad(ri(0,59))+":00+07:00";
+      }
+      if(st==="pending") Object.assign(b,{status:"pending", slipAt:m+"-29T20:14:00+07:00", verify:{state:"manual", note:"ข้อมูลตัวอย่าง ไม่มีรูปสลิป"}});
+      bills[b.id] = b; w += wu; e += eu;
+    });
+  });
+  months.forEach(m => {
+    const eu = Object.values(bills).filter(b=>b.month===m).reduce((s,b)=>s+b.elecUnits,0);
+    const wu = Object.values(bills).filter(b=>b.month===m).reduce((s,b)=>s+b.waterUnits,0);
+    const add = (id,cat,amount,note) => expenses[m+"-"+id] = {id:m+"-"+id, month:m, date:m+"-28", cat, amount:r2(amount), note, demo:true};
+    add("e1","ค่าไฟการไฟฟ้า", eu*4.6 + 900, "ใบแจ้งหนี้ กฟภ.");
+    add("e2","ค่าน้ำประปา", wu*12 + 300, "ใบแจ้งหนี้ กปภ.");
+    add("e3","เงินเดือนแม่บ้าน", 9000, "");
+    add("e4","อินเทอร์เน็ต", 1590, "ไฟเบอร์ 1Gbps");
+    if(rnd()>.35) add("e5","ซ่อมบำรุง", ri(4,30)*100, ["เปลี่ยนหลอดไฟทางเดิน","ซ่อมแอร์ห้อง 203","ล้างถังเก็บน้ำ","ซ่อมประตูรั้ว"][ri(0,3)]);
+  });
+  const repairs = {};
+  const rp = (id, room, cat, note, rep, status, sch, done, ownerNote, cost) => repairs[id] = {id, room, cat, note, reportedAt:rep, status, scheduledAt:sch||"", doneAt:done||"", ownerNote:ownerNote||"", cost:cost||0, demo:true};
+  rp("r1","203","แอร์","แอร์ไม่เย็น มีน้ำหยดจากตัวเครื่องตอนกลางคืน", endMonth+"-18","done", endMonth+"-20", endMonth+"-20","ล้างแอร์และเติมน้ำยา", 1200);
+  rp("r2","101","ประปา","ก๊อกอ่างล้างหน้ารั่ว น้ำหยดตลอดเวลา", endMonth+"-26","scheduled", endMonth+"-30","","ช่างประปาเข้าช่วงบ่าย");
+  rp("r3","204","ไฟฟ้า","หลอดไฟห้องน้ำขาด", endMonth+"-29","new");
+  return {settings, rooms, bills, expenses, repairs};
+}
+/*DEMO-END*/
+
+/* ---------- state ---------- */
+const BANKS = ["กสิกรไทย","ไทยพาณิชย์","กรุงเทพ","กรุงไทย","กรุงศรีอยุธยา","ทหารไทยธนชาต (ttb)","ออมสิน","ธ.ก.ส.","อาคารสงเคราะห์","ยูโอบี","ซีไอเอ็มบี ไทย","เกียรตินาคินภัทร","แลนด์ แอนด์ เฮ้าส์","อื่นๆ"];
+const DEFAULTS = {name:"หอพักของฉัน", promptpay:"", accountName:"", bank:"", bankAcc:"", qrImg:"", waterRate:18, waterMin:0, elecRate:7, trash:40, dueDay:5, prefix:"APT"};
+const S = { db:null, sample:null, online:false, ready:false,
+  settings:{...DEFAULTS}, rooms:{}, bills:{}, expenses:{}, repairs:{}, misc:{}, mode:"loading", user:null, repFilter:"open",
+  month: monthKey(new Date()), tab:"rooms", filter:"all", sheet:null, tenantApt:"", busy:{},
+  meterView:"todo", draft:{}, mphoto:{}, photoCache:{}, roomView:(()=>{ try{ return localStorage.getItem("roomView") || (matchMedia("(min-width:900px)").matches?"table":"grid"); }catch(e){ return "grid"; } })(), rcSel:new Set(), rcBusy:false, downloads:null };
+const initialHash = (location.hash||"").replace("#","");
+if(["rooms","meter","report","tenant","repair","settings"].includes(initialHash)) S.tab = initialHash;
+
+function loadDemoLocal(){ const d = buildDemo(S.month); S.settings = {...DEFAULTS, ...d.settings}; S.rooms = d.rooms; S.bills = d.bills; S.expenses = d.expenses; S.repairs = d.repairs; }
+
+/* ---------- store layer: Supabase ---------- */
+const TABLE = {meta:"dorm_settings", rooms:"dorm_rooms", bills:"dorm_bills", expenses:"dorm_expenses", repairs:"dorm_repairs", slips:"dorm_slips", photos:"dorm_meter_photos", repairPhotos:"dorm_repair_photos"};
+const PK = {rooms:"no"};
+const COLS = {
+  meta:["id","name","promptpay","account_name","bank","bank_acc","qr_img","water_rate","water_min","elec_rate","trash","due_day","prefix","demo"],
+  rooms:["no","floor","tenant","phone","rent","vacant","apt_id","water_start","elec_start","move_in","demo"],
+  bills:["id","month","room","rent","water_prev","water_curr","elec_prev","elec_curr","water_units","elec_units","water_rate","water_min","elec_rate","water","elec","trash","other","other_note","total","status","method","paid_at","slip_at","read_at","verify","water_reset","elec_reset","has_water_photo","has_elec_photo","demo"],
+  expenses:["id","month","date","cat","amount","note","demo"],
+  repairs:["id","room","cat","note","reported_at","status","scheduled_at","done_at","owner_note","cost","has_photo","by","created_at","expense_id","demo"],
+  slips:["id","img","at","by"], photos:["id","w","e","at"], repairPhotos:["id","img"]};
+const snake = k => k.replace(/[A-Z]/g, c => "_" + c.toLowerCase());
+const camel = k => k.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+const pkOf = col => PK[col] || "id";
+function toRow(col, obj, id){
+  const row = {}; const allow = COLS[col];
+  for(const [k,v] of Object.entries(obj||{})){ const sk = snake(k); if(allow.includes(sk) && v !== undefined) row[sk] = (v === "" && /_at$/.test(sk) && col==="bills") ? null : v; }
+  if(id !== undefined) row[pkOf(col)] = id;
+  return row;
+}
+function fromRow(row){ const o = {}; for(const [k,v] of Object.entries(row||{})){ if(v !== null) o[camel(k)] = v; } return o; }
+const memCol = c => c==="repairs"?S.repairs : c==="rooms"?S.rooms : c==="bills"?S.bills : c==="expenses"?S.expenses : (S.misc[c] = S.misc[c] || {});
+function sbErr(error){ if(error){ const e = new Error(error.message); e.code = error.code || "sb"; throw e; } }
+async function put(col, id, data){
+  if(col==="meta"){ const { error } = await sb.from(TABLE.meta).upsert(toRow("meta", data, "main")); sbErr(error); S.settings = {...DEFAULTS, ...data}; render(); return; }
+  const { error } = await sb.from(TABLE[col]).upsert(toRow(col, data, id)); sbErr(error);
+  if(["rooms","bills","expenses","repairs"].includes(col)){ memCol(col)[id] = JSON.parse(JSON.stringify(data)); render(); }
+}
+async function patch(col, id, data){
+  const row = toRow(col, data); for(const k of Object.keys(data)) if(data[k] === null && COLS[col].includes(snake(k))) row[snake(k)] = null;
+  const { error } = await sb.from(TABLE[col]).update(row).eq(pkOf(col), id); sbErr(error);
+  if(["rooms","bills","expenses","repairs"].includes(col) && memCol(col)[id]){ const cur = {...memCol(col)[id], ...JSON.parse(JSON.stringify(data))}; for(const k of Object.keys(data)) if(data[k]===null) delete cur[k]; memCol(col)[id] = cur; render(); }
+}
+async function remove(col, id){
+  const { error } = await sb.from(TABLE[col]).delete().eq(pkOf(col), id); sbErr(error);
+  if(["rooms","bills","expenses","repairs"].includes(col)){ delete memCol(col)[id]; render(); }
+}
+async function getSlip(id){ return getDoc("slips", id); }
+async function getDoc(col, id){
+  if(S.mode==="tenant"){
+    if(col==="photos"){ const { data } = await sb.rpc("dorm_tenant_meter_photos", {p_apt:S.tenantApt, p_bill:id}); return data ? fromRow(data) : null; }
+    if(col==="repairPhotos"){ const { data } = await sb.rpc("dorm_tenant_repair_photo", {p_apt:S.tenantApt, p_id:id}); return data ? {img:data} : null; }
+    return null;
+  }
+  const { data, error } = await sb.from(TABLE[col]).select("*").eq(pkOf(col), id).maybeSingle(); sbErr(error);
+  return data ? fromRow(data) : null;
+}
+async function fetchAll(col){
+  const out = {}; const size = 1000; const pk = pkOf(col);
+  for(let from = 0; ; from += size){
+    const { data, error } = await sb.from(TABLE[col]).select("*").range(from, from + size - 1); sbErr(error);
+    data.forEach(r => { const o = fromRow(r); out[r[pk]] = o; });
+    if(data.length < size) break;
+  }
+  return out;
+}
+function dbErr(e){ const c = e && e.code; toast(c==="42501" || c==="PGRST301" ? "บัญชีนี้ไม่มีสิทธิ์แก้ไขข้อมูล" : c==="23505" ? "ข้อมูลซ้ำกับที่มีอยู่แล้ว" : navigator.onLine===false ? "ไม่มีอินเทอร์เน็ต บันทึกไม่สำเร็จ" : "บันทึกไม่สำเร็จ ลองอีกครั้ง"); }
+async function safe(fn){ try{ return await fn(); } catch(e){ console.error(e); dbErr(e); } }
+
+/* ---------- domain ---------- */
+const roomsSorted = () => Object.values(S.rooms).sort((a,b)=> (a.floor-b.floor) || String(a.no).localeCompare(String(b.no), undefined, {numeric:true}));
+const occupied = () => roomsSorted().filter(r=>!r.vacant);
+const billOf = (room, m=S.month) => S.bills[billId(m, room)];
+function prevReading(room){
+  const pb = S.bills[billId(addMonth(S.month,-1), room.no)];
+  if(pb) return {w:pb.waterCurr, e:pb.elecCurr};
+  // look back further
+  const older = Object.values(S.bills).filter(b=>b.room===room.no && b.month < S.month).sort((a,b)=>b.month.localeCompare(a.month))[0];
+  if(older) return {w:older.waterCurr, e:older.elecCurr};
+  return {w:Number(room.waterStart)||0, e:Number(room.elecStart)||0};
+}
+function calcBill(room, wPrev, wCurr, ePrev, eCurr, wReset, eReset, other){
+  const st = S.settings;
+  const wu = wReset ? wCurr : Math.max(0, wCurr - wPrev);
+  const eu = eReset ? eCurr : Math.max(0, eCurr - ePrev);
+  const water = Math.max(r2(wu * st.waterRate), Number(st.waterMin)||0);
+  const elec = r2(eu * st.elecRate);
+  const rent = Number(room.rent)||0, trash = Number(st.trash)||0, oth = Number(other)||0;
+  return {waterUnits:wu, elecUnits:eu, water, elec, rent, trash, other:oth, total:r2(rent+water+elec+trash+oth),
+    waterRate:st.waterRate, waterMin:Number(st.waterMin)||0, elecRate:st.elecRate};
+}
+function statusOf(room, m=S.month){
+  if(room.vacant) return "vacant";
+  const b = billOf(room.no, m); if(!b) return "none"; return b.status;
+}
+function dueDate(m){ return addMonth(m,1) + "-" + pad(S.settings.dueDay||5); }
+const isOverdue = b => b && b.status!=="paid" && new Date().toISOString().slice(0,10) > dueDate(b.month);
+const STATUS_TH = {paid:"ชำระแล้ว", unpaid:"ค้างชำระ", pending:"รอตรวจสลิป", none:"ยังไม่จดมิเตอร์", vacant:"ห้องว่าง"};
+const newAptId = no => (S.settings.prefix||"APT").toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,5) + "-" + no + "-" + Array.from({length:6},()=>"ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[Math.floor(Math.random()*32)]).join("");
+
+/* ---------- PromptPay QR (EMVCo) ---------- */
+function crc16(s){ let crc = 0xFFFF; for(let i=0;i<s.length;i++){ crc ^= s.charCodeAt(i) << 8; for(let j=0;j<8;j++) crc = (crc & 0x8000) ? ((crc << 1) ^ 0x1021) & 0xFFFF : (crc << 1) & 0xFFFF; } return crc.toString(16).toUpperCase().padStart(4,"0"); }
+function ppPayload(id, amount){
+  let t = String(id||"").replace(/[^0-9]/g,""); if(!t) return null;
+  const f = (k,v) => k + String(v.length).padStart(2,"0") + v;
+  let tag;
+  if(t.length >= 15) tag = "03";
+  else if(t.length >= 13) tag = "02";
+  else { tag = "01"; t = ("0000000000000" + t.replace(/^0/,"66")).slice(-13); }
+  let d = f("00","01") + f("01", amount ? "12" : "11") + f("29", f("00","A000000677010111") + f(tag,t)) + f("58","TH") + f("53","764");
+  if(amount) d += f("54", Number(amount).toFixed(2));
+  d += "6304"; return d + crc16(d);
+}
+function drawQR(canvas, text){
+  if(typeof qrcode !== "function"){ canvas.replaceWith(Object.assign(document.createElement("div"),{className:"small",textContent:"โหลดตัวสร้าง QR ไม่ได้"})); return; }
+  const q = qrcode(0,"M"); q.addData(text); q.make();
+  const n = q.getModuleCount(), m = 3, cell = Math.floor(440/(n+m*2)), size = cell*(n+m*2);
+  canvas.width = canvas.height = size; const c = canvas.getContext("2d");
+  c.fillStyle = "#FFFFFF"; c.fillRect(0,0,size,size); c.fillStyle = "#000000";
+  for(let r=0;r<n;r++) for(let k=0;k<n;k++) if(q.isDark(r,k)) c.fillRect((k+m)*cell,(r+m)*cell,cell,cell);
+}
+
+/* ---------- slip handling ---------- */
+function compressImage(file, maxSide=900, quality=.72, limit=200000){
+  return new Promise((res, rej) => {
+    const fr = new FileReader();
+    fr.onerror = () => rej(new Error("read"));
+    fr.onload = () => { const img = new Image(); img.onerror = () => rej(new Error("decode")); img.onload = () => {
+      let max = maxSide, q = quality, out;
+      for(let i=0;i<6;i++){
+        const sc = Math.min(1, max/Math.max(img.width,img.height)); const cv = document.createElement("canvas");
+        cv.width = Math.round(img.width*sc); cv.height = Math.round(img.height*sc);
+        const cx = cv.getContext("2d"); cx.fillStyle="#fff"; cx.fillRect(0,0,cv.width,cv.height); cx.drawImage(img,0,0,cv.width,cv.height);
+        out = cv.toDataURL("image/jpeg", q); if(out.length < limit) break; max *= .8; q = Math.max(.4, q-.08);
+      }
+      res(out); }; img.src = fr.result; };
+    fr.readAsDataURL(file);
+  });
+}
+function dataUrlToBlob(u){ const [h,b] = u.split(","); const bin = atob(b); const a = new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) a[i]=bin.charCodeAt(i); return new Blob([a],{type:(h.match(/data:(.*?);/)||[])[1]||"image/jpeg"}); }
+
+async function submitSlip(id, file, by){
+  const b = S.bills[id]; if(!b) return;
+  S.busy[id] = "upload"; render();
+  try{
+    const img = await compressImage(file);
+    if(S.mode==="tenant"){
+      const { data, error } = await sb.rpc("dorm_tenant_submit_slip", {p_apt:S.tenantApt, p_bill:id, p_img:img});
+      if(error || !data) throw Object.assign(new Error("slip"), {code:"slip"});
+      toast("ส่งสลิปแล้ว รอเจ้าของหอตรวจ"); await loadTenant(S.tenantApt); delete S.busy[id]; render(); return;
+    }
+    await put("slips", id, {img, at:new Date().toISOString(), by});
+    await patch("bills", id, {status:"pending", slipAt:new Date().toISOString(), verify:{state:"checking", note:"กำลังอ่านสลิป"}});
+    await autoVerify(id, file);
+  } catch(e){ console.error(e); if(e && e.code) dbErr(e); else toast("อ่านไฟล์รูปไม่ได้ ลองเลือกรูปสลิปใหม่"); }
+  delete S.busy[id]; render();
+}
+async function autoVerify(id, blob){
+  const b = S.bills[id]; if(!b) return;
+  const manual = note => patch("bills", id, {verify:{state:"manual", note, amount:null, ref:null}});
+  if(!S.sample) return manual("รอเจ้าของหอตรวจสลิป");
+  const lim = await S.sample.limits().catch(()=>null);
+  if(!lim || !lim.images) return manual("รอเจ้าของหอตรวจสลิป");
+  S.busy[id] = "verify"; render();
+  try{
+    const prompt = `The attached image should be a Thai bank or PromptPay transfer slip (สลิปโอนเงิน). Read it carefully.
+Reply with ONLY a JSON object with these keys:
+{"isSlip": boolean (true only if this is a real-looking completed transfer slip),
+ "amount": number or null (the transferred amount in THB, digits only, e.g. 4538.00),
+ "dateTime": string or null (as printed),
+ "bank": string or null,
+ "senderName": string or null,
+ "receiverName": string or null,
+ "transRef": string or null (the transaction reference / เลขที่รายการ)}`;
+    const r = await S.sample.json(prompt, {images: blob, modelTier:"default"});
+    const amt = Number(r && r.amount);
+    const cur = S.bills[id] || b;
+    const dup = r && r.transRef && Object.values(S.bills).some(x => x.id!==id && x.verify && x.verify.ref && x.verify.ref === r.transRef);
+    const base = {amount: isFinite(amt)?amt:null, ref: r.transRef||null, bank: r.bank||null, dateTime: r.dateTime||null, sender: r.senderName||null, receiver: r.receiverName||null};
+    if(!r || !r.isSlip) return patch("bills", id, {verify:{...base, state:"mismatch", note:"รูปนี้ไม่ใช่สลิปโอนเงิน หรืออ่านไม่ชัด"}});
+    if(dup) return patch("bills", id, {verify:{...base, state:"mismatch", note:"เลขที่รายการนี้เคยใช้กับบิลอื่นแล้ว"}});
+    if(!isFinite(amt) || Math.abs(amt - cur.total) > 0.009) return patch("bills", id, {verify:{...base, state:"mismatch", note:`ยอดในสลิป ${isFinite(amt)?baht(amt):"อ่านไม่ได้"} ไม่ตรงกับบิล ${baht(cur.total)}`}});
+    await patch("bills", id, {status:"paid", method:"transfer", paidAt:new Date().toISOString(), verify:{...base, state:"auto-ok", note:"ยอดตรงกับบิล อัปเดตสถานะอัตโนมัติ"}});
+    toast("ตรวจสลิปผ่าน ห้อง " + cur.room + " ชำระแล้ว");
+  } catch(e){
+    console.error(e);
+    const why = e && e.code==="not_granted" ? "ไม่ได้อนุญาตให้อ่านสลิปอัตโนมัติ" : e && e.code==="rate_limited" ? "ระบบตรวจอัตโนมัติไม่ว่าง" : "ตรวจอัตโนมัติไม่สำเร็จ";
+    await manual(why + " รอเจ้าของหอตรวจ").catch(()=>{});
+  } finally { delete S.busy[id]; render(); }
+}
+
+/* ---------- meter photos ---------- */
+const KIND_TH = {w:"มิเตอร์น้ำ", e:"มิเตอร์ไฟ"};
+async function takeMeterPhoto(no, k, file){
+  const slot = (S.mphoto[no] = S.mphoto[no] || {});
+  let img;
+  try{ img = await compressImage(file, 720, .62, 100000); }
+  catch(e){ toast("เปิดรูปไม่ได้ ลองถ่ายใหม่"); return; }
+  slot[k] = {img, status:"reading"}; render();
+  const room = S.rooms[no], b = billOf(no), p = prevReading(room);
+  const prev = k==="w" ? (b ? b.waterPrev : p.w) : (b ? b.elecPrev : p.e);
+  const lim = S.sample ? await S.sample.limits().catch(()=>null) : null;
+  if(!lim || !lim.images){ slot[k] = {img, status:"manual", note:"แนบรูปแล้ว กรอกตัวเลขเอง"}; render(); return; }
+  try{
+    const what = k==="w"
+      ? "a residential WATER meter (unit: cubic metres, ลบ.ม.). Read only the whole-number register (usually black digits). Ignore red digits, decimal wheels and small dials."
+      : "a residential ELECTRICITY meter (unit: kWh, หน่วย). Read the main kWh register. Ignore red/decimal digits after the point.";
+    const r = await S.sample.json(`This photo should show ${what}
+The previous reading for this meter was ${prev}. The new reading is normally equal to or somewhat higher than that.
+Reply with ONLY a JSON object: {"isMeter": boolean, "reading": integer or null, "confidence": "high" | "low", "note": short Thai explanation if unsure or empty string}`, {images: file, modelTier:"default"});
+    const val = Number.isFinite(Number(r && r.reading)) && r.reading !== null ? Math.round(Number(r.reading)) : null;
+    if(!r || !r.isMeter || val === null){ slot[k] = {img, status:"manual", note:(r && r.note) || "อ่านเลขจากรูปไม่ได้ กรอกเอง"}; }
+    else {
+      const d = (S.draft[no] = S.draft[no] || {}); d[k] = String(val);
+      const odd = val < prev || val - prev > (k==="w" ? 200 : 3000);
+      slot[k] = {img, status: odd || r.confidence==="low" ? "check" : "read", reading:val,
+        note: val < prev ? "เลขที่อ่านได้น้อยกว่าครั้งก่อน ตรวจอีกครั้ง" : odd ? "ใช้ไปมากผิดปกติ ตรวจอีกครั้ง" : r.confidence==="low" ? (r.note || "ไม่แน่ใจ ตรวจเลขอีกครั้ง") : "อ่านเลขแล้ว ตรวจก่อนบันทึก"};
+    }
+  } catch(e){
+    console.error(e);
+    slot[k] = {img, status:"manual", note: e && e.code==="not_granted" ? "ไม่ได้อนุญาตให้อ่านรูป กรอกเอง" : "อ่านรูปไม่สำเร็จ กรอกเอง"};
+  }
+  render();
+}
+function photoRefs(no){ const s = S.mphoto[no] || {}; return {w: s.w && s.w.img, e: s.e && s.e.img}; }
+async function loadPhotos(){
+  document.querySelectorAll("[data-photos]").forEach(async box => {
+    const id = box.dataset.photos; if(box.dataset.loaded) return; box.dataset.loaded = "1";
+    let p = S.photoCache[id];
+    if(!p){ p = await getDoc("photos", id).catch(()=>null); if(p) S.photoCache[id] = p; }
+    if(!box.isConnected) return;
+    const b = S.bills[id] || {};
+    const fig = (k, cur) => p && p[k] ? `<figure><img src="${p[k]}" alt="รูป${KIND_TH[k]}" data-act="zoom"><figcaption>${KIND_TH[k]} · <span class="num">${nf(cur)}</span></figcaption></figure>` : "";
+    box.innerHTML = p ? `<div class="photos">${fig("w", b.waterCurr)}${fig("e", b.elecCurr)}</div>` : `<span class="small muted">ไม่มีรูปมิเตอร์</span>`;
+  });
+}
+
+/* ---------- rendering ---------- */
+let renderQueued = false;
+function render(){ if(renderQueued) return; renderQueued = true; requestAnimationFrame(()=>{ renderQueued = false; doRender(); }); }
+function doRender(){
+  $("#dormName").textContent = S.mode==="login" ? "หอพักจดง่าย" : (S.settings.name || "หอพัก");
+  $("#navDorm").textContent = S.settings.name || "";
+  { const n = Object.values(S.repairs).filter(r=>r.status==="new").length; const bd = $("#repBadge"); bd.hidden = !n; bd.textContent = n; }
+  $("#subline").textContent = S.mode==="reset" ? "ตั้งรหัสผ่านใหม่" : S.mode==="tenant" ? "เช็กบิล ชำระเงิน และแจ้งซ่อม" : S.mode==="login" ? "เข้าสู่ระบบสำหรับเจ้าของหอ" : "ข้อมูลซิงก์ทุกเครื่อง";
+  $("#mLabel").textContent = monthTH(S.month);
+  document.querySelectorAll("nav.tabs button").forEach(b => b.setAttribute("aria-current", b.dataset.tab===S.tab ? "page" : "false"));
+  const main = $("#main");
+  const ae = document.activeElement;
+  const typing = ae && main.contains(ae) && (ae.tagName==="INPUT"||ae.tagName==="TEXTAREA"||ae.tagName==="SELECT") && ae.type!=="file";
+  document.body.classList.toggle("nonav", S.mode!=="owner");
+  if(S.mode==="loading"){ main.innerHTML = `<div class="empty"><span class="spin"></span><span class="muted">กำลังโหลดข้อมูลหอพัก…</span></div>`; return; }
+  if(S.mode==="login"){ if(!typing){ main.innerHTML = viewLogin(); } return; }
+  if(S.mode==="reset"){ if(!typing){ main.innerHTML = viewReset(); } return; }
+  if(S.mode==="tenant"){ if(!typing){ main.innerHTML = viewTenant() + `<p class="small muted" style="text-align:center;margin-top:24px"><button class="linkbtn" data-act="goOwner">สำหรับเจ้าของหอ: เข้าสู่ระบบ</button></p>`; afterMain(); } else pendingMain = true; renderSheet(); return; }
+  if(!S.ready) return;
+  if(!typing){
+    const html = S.tab==="rooms"?viewRooms(): S.tab==="meter"?viewMeter(): S.tab==="report"?viewReport(): S.tab==="tenant"?viewTenant(): S.tab==="repair"?viewRepairs(): viewSettings();
+    main.innerHTML = banner() + html;
+    afterMain();
+  } else pendingMain = true;
+  renderSheet();
+}
+let pendingMain = false;
+document.addEventListener("focusout", () => setTimeout(()=>{ if(pendingMain && !($("#main").contains(document.activeElement) && ["INPUT","TEXTAREA","SELECT"].includes(document.activeElement.tagName))){ pendingMain=false; render(); } }, 60));
+
+function banner(){
+  if(!S.settings.demo) return "";
+  return `<div class="demo"><b>ข้อมูลตัวอย่าง</b><span>ห้อง ชื่อผู้เช่า และยอดเงินทั้งหมดเป็นตัวอย่างสำหรับทดลองใช้</span>${S.tab!=="settings"?`<button class="btn sm ghost" data-act="tab" data-v="settings">ล้างและเริ่มใช้จริง</button>`:""}</div>`;
+}
+
+function viewRooms(){
+  const rs = roomsSorted();
+  if(!rs.length) return `<div class="card empty"><h2>ยังไม่มีห้องพัก</h2><p class="muted small">เพิ่มห้องทีละห้องหรือสร้างทั้งชั้นได้ในหน้าตั้งค่า</p><button class="btn pri" data-act="tab" data-v="settings">เพิ่มห้องพัก</button></div>`;
+  const occ = rs.filter(r=>!r.vacant);
+  const cnt = {paid:0, unpaid:0, pending:0, none:0, vacant:rs.length-occ.length};
+  let expect = 0, got = 0, cashAmt = 0, cashN = 0, xferAmt = 0, xferN = 0;
+  occ.forEach(r => { const s = statusOf(r); cnt[s]++; const b = billOf(r.no); if(b){ expect += b.total; if(b.status==="paid"){ got += b.total; if(b.method==="cash"){ cashAmt += b.total; cashN++; } else { xferAmt += b.total; xferN++; } } } });
+  const pct = expect ? Math.round(got/expect*100) : 0;
+  const pctCash = expect ? cashAmt/expect*100 : 0, pctX = expect ? xferAmt/expect*100 : 0;
+  const chip = (k, dot, label, n) => `<button class="chip" data-act="filter" data-v="${k}" aria-pressed="${S.filter===k}"><span class="dot ${dot}"></span>${label} <b class="num">${n}</b></button>`;
+  const payOf = r => { const b = billOf(r.no); return b && b.status==="paid" ? (b.method==="cash" ? "cash" : "transfer") : null; };
+  const show = r => S.filter==="all" || statusOf(r)===S.filter || payOf(r)===S.filter;
+  const floors = [...new Set(rs.map(r=>r.floor))];
+  const tiles = floors.map(f => {
+    const list = rs.filter(r=>r.floor===f && show(r)); if(!list.length) return "";
+    return `<section class="floor"><h3>ชั้น ${esc(f)}</h3><div class="board">${list.map(tile).join("")}</div></section>`;
+  }).join("");
+  return `<div class="summary">
+    <div class="card collect"><div class="row" style="justify-content:space-between;align-items:flex-end">
+      <div><div class="label">เก็บได้แล้ว · ${esc(monthTH(S.month))}</div><div class="big">${baht(got)} <span class="muted small" style="font-family:var(--body);font-weight:400">จาก ${baht(expect)}</span></div></div>
+      <div class="num" style="font-size:20px;font-weight:600">${pct}%</div></div>
+      <div class="bar split"><i style="width:${pctX}%"></i><i class="c" style="width:${pctCash}%"></i></div>
+      <div class="paysplit">
+        <button class="pay" data-act="filter" data-v="transfer" aria-pressed="${S.filter==="transfer"}"><span class="sw sx"></span><span><span class="label">โอน (แนบสลิป)</span><b class="num">${baht(xferAmt)}</b><small>${xferN} ห้อง</small></span></button>
+        <button class="pay" data-act="filter" data-v="cash" aria-pressed="${S.filter==="cash"}"><span class="sw sc"></span><span><span class="label">เงินสด</span><b class="num">${baht(cashAmt)}</b><small>${cashN} ห้อง</small></span></button>
+      </div></div>
+    <div class="filters"><div class="chips">${chip("all","", "ทั้งหมด", occ.length)}${chip("paid","p","ชำระแล้ว",cnt.paid)}${chip("unpaid","u","ค้างชำระ",cnt.unpaid)}${chip("pending","k","รอตรวจสลิป",cnt.pending)}${chip("none","n","ยังไม่จด",cnt.none)}${chip("vacant","v","ว่าง",cnt.vacant)}</div>
+      <div class="seg" role="group" aria-label="รูปแบบการแสดง"><button data-act="rview" data-v="grid" aria-pressed="${S.roomView==="grid"}">ผังห้อง</button><button data-act="rview" data-v="table" aria-pressed="${S.roomView==="table"}">ตาราง</button></div></div>
+  </div>${S.roomView==="table" ? roomsTable(rs.filter(show)) : (tiles || `<p class="muted">ไม่มีห้องในสถานะนี้</p>`)}`;
+}
+function roomsTable(list){
+  if(!list.length) return `<p class="muted">ไม่มีห้องในสถานะนี้</p>`;
+  const tot = {rent:0, water:0, elec:0, extra:0, total:0};
+  const rows = list.map(r => {
+    const s = statusOf(r), b = billOf(r.no);
+    if(b){ tot.rent += b.rent; tot.water += b.water; tot.elec += b.elec; tot.extra += b.trash + (b.other||0); tot.total += b.total; }
+    const pill = `<span class="pill ${s==="vacant"?"none":s}">${STATUS_TH[s]}</span>${b && s==="unpaid" && isOverdue(b)?` <span class="small" style="color:var(--unpaid)">เกินกำหนด</span>`:""}`;
+    const n = v => b ? baht(v) : `<span class="muted">—</span>`;
+    return `<tr data-act="open" data-v="${esc(r.no)}" tabindex="0"><td class="num"><b>${esc(r.no)}</b></td><td class="t">${r.vacant?`<span class="muted">ห้องว่าง</span>`:esc(r.tenant)}</td>
+      <td class="n">${b?nf(b.waterUnits):"—"}</td><td class="n">${b?nf(b.elecUnits):"—"}</td>
+      <td class="n">${n(b&&b.rent)}</td><td class="n">${n(b&&b.water)}</td><td class="n">${n(b&&b.elec)}</td><td class="n">${n(b&&(b.trash+(b.other||0)))}</td><td class="n"><b>${n(b&&b.total)}</b></td>
+      <td>${pill}</td><td>${b&&b.status==="paid"?(b.method==="cash"?"เงินสด":"โอน"):""}</td></tr>`;
+  }).join("");
+  return `<div class="tablewrap card" style="padding:0"><table class="rt"><thead><tr><th>ห้อง</th><th class="t">ลูกบ้าน</th><th class="n">น้ำ (ลบ.ม.)</th><th class="n">ไฟ (หน่วย)</th><th class="n">ค่าห้อง</th><th class="n">ค่าน้ำ</th><th class="n">ค่าไฟ</th><th class="n">ขยะ/อื่นๆ</th><th class="n">รวม</th><th>สถานะ</th><th>ชำระโดย</th></tr></thead>
+    <tbody>${rows}</tbody><tfoot><tr><td colspan="4">รวม ${list.length} ห้อง</td><td class="n">${baht(tot.rent)}</td><td class="n">${baht(tot.water)}</td><td class="n">${baht(tot.elec)}</td><td class="n">${baht(tot.extra)}</td><td class="n">${baht(tot.total)}</td><td colspan="2"></td></tr></tfoot></table></div>`;
+}
+function tile(r){
+  const s = statusOf(r), b = billOf(r.no);
+  const tag = s==="pending" ? `<span class="tag">รอตรวจ</span>` : (s==="unpaid" && isOverdue(b)) ? `<span class="tag">เกินกำหนด</span>` : s==="paid" ? `<span class="tag">${b.method==="cash"?"เงินสด":"โอน"}</span>` : "";
+  const amt = s==="vacant" ? "ห้องว่าง" : s==="none" ? "ยังไม่จด" : baht(b.total);
+  return `<button class="room ${s}" data-act="open" data-v="${esc(r.no)}" aria-label="ห้อง ${esc(r.no)} ${STATUS_TH[s]}">${tag}<span class="no">${esc(r.no)}</span><span class="who">${esc(r.tenant||"—")}</span><span class="amt">${amt}</span></button>`;
+}
+
+function viewMeter(){
+  const occ = occupied();
+  if(!occ.length) return `<div class="card empty"><h2>ยังไม่มีห้องที่มีผู้เช่า</h2><button class="btn pri" data-act="tab" data-v="settings">เพิ่มห้องพัก</button></div>`;
+  const done = occ.filter(r=>billOf(r.no)).length;
+  const st = S.settings;
+  return `<div class="progress"><b class="num">${done}/${occ.length}</b><div class="bar"><i style="width:${occ.length?done/occ.length*100:0}%"></i></div><span class="small muted">จดแล้ว</span></div>
+  <p class="small muted" style="margin:0 0 12px">น้ำ ${baht(st.waterRate)}/ลบ.ม.${st.waterMin?` (ขั้นต่ำ ${baht(st.waterMin)})`:""} · ไฟ ${baht(st.elecRate)}/หน่วย · ขยะ ${baht(st.trash)} · กด “บันทึก” แล้วระบบไปห้องถัดไปให้</p>
+  <div class="filters" style="margin-bottom:12px"><div class="seg" role="group" aria-label="แสดงห้อง"><button data-act="mview" data-v="todo" aria-pressed="${S.meterView==="todo"}">ยังไม่จด ${occ.length-done}</button><button data-act="mview" data-v="all" aria-pressed="${S.meterView!=="todo"}">ทั้งหมด ${occ.length}</button></div></div>
+  <div class="meters">${(S.meterView==="todo" ? occ.filter(r=>!billOf(r.no) || S.draft[r.no] || S.mphoto[r.no] || S.justSaved===r.no) : occ).map(mrow).join("") || `<div class="card empty"><h2>จดครบทุกห้องแล้ว</h2><p class="small muted" style="margin:0">ดูหรือแก้เลขได้ที่ “ทั้งหมด”</p></div>`}</div>`;
+}
+function mrow(r){
+  const b = billOf(r.no), p = prevReading(r);
+  if(b && b.status!=="unpaid") return `<div class="mrow done mini"><div class="mhead"><span class="no">${esc(r.no)}</span><span class="small" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.tenant)}</span><span class="pill ${b.status}">${STATUS_TH[b.status]}</span></div><div class="mcalc">${calcLine(b)}</div></div>`;
+  const d = S.draft[r.no] || {};
+  const wPrev = d.wp !== undefined ? Number(d.wp)||0 : (b ? b.waterPrev : p.w), ePrev = d.ep !== undefined ? Number(d.ep)||0 : (b ? b.elecPrev : p.e);
+  const locked = b && b.status!=="unpaid";
+  const prevLine = (k, pv) => {
+    const key = k==="w" ? "wp" : "ep";
+    if(!locked && d[key+"Edit"]) return `<div class="prev prevedit"><label for="${key}-${esc(r.no)}">เลขครั้งก่อน</label><input class="inp num prevIn" id="${key}-${esc(r.no)}" data-pk="${key}" inputmode="numeric" value="${esc(d[key]!==undefined?d[key]:pv)}"></div>`;
+    return `<div class="prev">ครั้งก่อน <span class="num">${nf(pv)}</span>${locked?"":` <button class="linkbtn" type="button" data-act="editPrev" data-k="${key}" data-v="${esc(r.no)}">แก้เลขตั้งต้น</button>`}</div>`;
+  };
+  const val = (k, saved) => d[k] !== undefined ? d[k] : (saved ?? "");
+  const cam = k => locked ? "" : `<label class="cam" title="ถ่ายรูป${KIND_TH[k]}" aria-label="ถ่ายรูป${KIND_TH[k]} ห้อง ${esc(r.no)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg><input type="file" accept="image/*" capture="environment" data-mphoto="${k}" data-room="${esc(r.no)}"></label>`;
+  const ph = k => {
+    const s = (S.mphoto[r.no]||{})[k];
+    if(s) return `<div class="mph"><img src="${s.img}" alt="รูป${KIND_TH[k]}" data-act="zoomRow">${s.status==="reading"?`<span><span class="spin"></span> กำลังอ่านเลข</span>`:`<span class="${s.status==="read"?"ok":"warn"}">${esc(s.note||"")}</span>`}</div>`;
+    const has = b && (k==="w" ? b.hasWaterPhoto : b.hasElecPhoto);
+    return has ? `<div class="mph"><span class="ok">บันทึกรูปแล้ว</span></div>` : "";
+  };
+  return `<div class="mrow ${b?"done":""} ${locked?"locked":""}" id="mr-${esc(r.no)}" data-room="${esc(r.no)}" data-wp="${wPrev}" data-ep="${ePrev}" ${d.wr?'data-wr="1"':""} ${d.er?'data-er="1"':""}>
+    <div class="mhead"><span class="no">${esc(r.no)}</span><span class="small grow" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.tenant)}</span>${b?`<span class="pill ${b.status}">${STATUS_TH[b.status]}</span>`:""}</div>
+    <div class="mgrid">
+      <div class="field"><label for="w-${esc(r.no)}">มิเตอร์น้ำ (ลบ.ม.)</label><div class="inrow"><input class="inp meter" id="w-${esc(r.no)}" inputmode="numeric" pattern="[0-9]*" placeholder="${wPrev}" value="${esc(val("w", b&&b.waterCurr))}" ${locked?"disabled":""}>${cam("w")}</div>${prevLine("w", wPrev)}${ph("w")}</div>
+      <div class="field"><label for="e-${esc(r.no)}">มิเตอร์ไฟ (หน่วย)</label><div class="inrow"><input class="inp meter" id="e-${esc(r.no)}" inputmode="numeric" pattern="[0-9]*" placeholder="${ePrev}" value="${esc(val("e", b&&b.elecCurr))}" ${locked?"disabled":""}>${cam("e")}</div>${prevLine("e", ePrev)}${ph("e")}</div>
+    </div>
+    <div class="mcalc" id="mc-${esc(r.no)}"></div>
+    ${locked?`<div class="small muted">บิลนี้${b.status==="paid"?"ชำระแล้ว":"มีสลิปรอตรวจ"} แก้เลขมิเตอร์ไม่ได้</div>`:`<div class="row"><button class="btn pri" data-act="saveMeter" data-v="${esc(r.no)}" style="flex:1">${b?"บันทึกการแก้ไข":"บันทึก"}</button>${b?`<button class="btn ghost" data-act="clearReading" data-v="${esc(r.no)}" data-confirm="แตะอีกครั้งเพื่อล้าง">ล้างเลขเดือนนี้</button>`:""}</div>`}
+  </div>`;
+}
+function readRow(no){
+  const row = document.getElementById("mr-"+no); if(!row) return null;
+  const wIn = document.getElementById("w-"+no), eIn = document.getElementById("e-"+no);
+  const dr = S.draft[no] || {};
+  const wp = dr.wp !== undefined ? Number(dr.wp)||0 : Number(row.dataset.wp), ep = dr.ep !== undefined ? Number(dr.ep)||0 : Number(row.dataset.ep);
+  const wv = wIn.value.trim(), ev = eIn.value.trim();
+  const w = wv===""?null:Number(wv), e = ev===""?null:Number(ev);
+  return {row, wp, ep, w, e, wReset: row.dataset.wr==="1", eReset: row.dataset.er==="1"};
+}
+function updateCalc(no){
+  const d = readRow(no); if(!d) return;
+  const out = document.getElementById("mc-"+no); const room = S.rooms[no]; const b = billOf(no);
+  if(d.w===null && d.e===null){ out.innerHTML = b ? calcLine(b) : ""; return; }
+  let msg = "";
+  if(d.w!==null && d.w < d.wp && !d.wReset) msg += `<span class="err">เลขน้ำน้อยกว่าครั้งก่อน</span> <button class="btn sm" data-act="reset" data-k="wr" data-v="${esc(no)}">นับเป็นมิเตอร์น้ำใหม่</button> `;
+  if(d.e!==null && d.e < d.ep && !d.eReset) msg += `<span class="err">เลขไฟน้อยกว่าครั้งก่อน</span> <button class="btn sm" data-act="reset" data-k="er" data-v="${esc(no)}">นับเป็นมิเตอร์ไฟใหม่</button>`;
+  if(msg){ out.innerHTML = msg; return; }
+  if(d.w===null || d.e===null){ out.innerHTML = `<span class="muted">กรอกให้ครบทั้งน้ำและไฟ</span>`; return; }
+  const c = calcBill(room, d.wp, d.w, d.ep, d.e, d.wReset, d.eReset, b?b.other:0);
+  out.innerHTML = calcLine(c) + (d.wReset||d.eReset?` <span class="small" style="color:var(--warn)">มิเตอร์ใหม่</span>`:"");
+}
+const calcLine = c => `<span>น้ำ <b>${nf(c.waterUnits)}</b> หน่วย = <b>${baht(c.water)}</b></span><span>ไฟ <b>${nf(c.elecUnits)}</b> หน่วย = <b>${baht(c.elec)}</b></span><span>รวมบิล <b>${baht(c.total)}</b></span>`;
+
+async function saveMeter(no){
+  const d = readRow(no), room = S.rooms[no];
+  if(!d || d.w===null || d.e===null || !isFinite(d.w) || !isFinite(d.e)) return toast("กรอกเลขมิเตอร์น้ำและไฟให้ครบ");
+  if((d.w < d.wp && !d.wReset) || (d.e < d.ep && !d.eReset)) return toast("เลขมิเตอร์น้อยกว่าครั้งก่อน ตรวจเลขอีกครั้ง");
+  const id = billId(S.month, no), old = S.bills[id];
+  const c = calcBill(room, d.wp, d.w, d.ep, d.e, d.wReset, d.eReset, old?old.other:0);
+  const data = {...(old||{}), id, month:S.month, room:no, waterPrev:d.wp, waterCurr:d.w, elecPrev:d.ep, elecCurr:d.e, waterReset:d.wReset, elecReset:d.eReset, ...c, otherNote:(old&&old.otherNote)||"", status:(old&&old.status)||"unpaid", readAt:new Date().toISOString()};
+  if(old && old.demo) data.demo = true; else delete data.demo;
+  document.activeElement && document.activeElement.blur && document.activeElement.blur();
+  const ph = photoRefs(no);
+  if((S.mphoto[no]||{}).w && S.mphoto[no].w.status==="reading" || (S.mphoto[no]||{}).e && S.mphoto[no].e.status==="reading") return toast("รอให้อ่านเลขจากรูปเสร็จก่อน");
+  if(ph.w || ph.e){
+    const prevP = await getDoc("photos", id).catch(()=>null) || {};
+    const pdoc = {w: ph.w || prevP.w || null, e: ph.e || prevP.e || null, at:new Date().toISOString()};
+    const okP = await safe(async()=>{ await put("photos", id, pdoc); return true; });
+    if(!okP) return;
+    S.photoCache[id] = pdoc; data.hasWaterPhoto = !!pdoc.w; data.hasElecPhoto = !!pdoc.e;
+  }
+  const ok = await safe(async()=>{ await put("bills", id, data); return true; });
+  if(!ok) return;
+  const dr = S.draft[no] || {};
+  const hasEarlier = Object.values(S.bills).some(x => x.room===no && x.month < S.month);
+  if(!hasEarlier && (dr.wp!==undefined || dr.ep!==undefined) && (room.waterStart!==d.wp || room.elecStart!==d.ep)) await safe(()=>put("rooms", no, {...room, waterStart:d.wp, elecStart:d.ep}));
+  delete S.draft[no]; delete S.mphoto[no]; S.justSaved = no; render();
+  toast(`ห้อง ${no} รวม ${baht(c.total)}`);
+  const occ = occupied(); const i = occ.findIndex(r=>r.no===no);
+  const next = occ.slice(i+1).find(r=>!billOf(r.no)) || occ.find(r=>!billOf(r.no));
+  if(next) setTimeout(()=>{ const el = document.getElementById("w-"+next.no); if(el){ el.focus({preventScroll:true}); el.closest(".mrow").scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth", block:"center"}); } }, 120);
+}
+
+function viewReport(){
+  const m = S.month;
+  const bills = Object.values(S.bills).filter(b=>b.month===m);
+  const paid = bills.filter(b=>b.status==="paid");
+  const sum = (arr,k) => r2(arr.reduce((s,x)=>s+(Number(x[k])||0),0));
+  const income = sum(paid,"total"), billed = sum(bills,"total"), outstanding = r2(billed-income);
+  const exps = Object.values(S.expenses).filter(e=>e.month===m).sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+  const expense = sum(exps,"amount"), profit = r2(income-expense);
+  const occ = occupied().length, total = roomsSorted().length;
+  const parts = [["ค่าห้อง","rent"],["ค่าไฟ","elec"],["ค่าน้ำ","water"],["ค่าขยะ","trash"],["อื่นๆ","other"]].map(([l,k])=>[l,sum(paid,k)]);
+  const pmax = Math.max(1,...parts.map(p=>p[1]));
+  const cash = sum(paid.filter(b=>b.method==="cash"),"total");
+  // 6-month series
+  const months = []; for(let k=11;k>=0;k--) months.push(addMonth(m,-k));
+  const series = months.map(mm => { const inc = r2(Object.values(S.bills).filter(b=>b.month===mm && b.status==="paid").reduce((s,b)=>s+b.total,0)); const ex = r2(Object.values(S.expenses).filter(e=>e.month===mm).reduce((s,e)=>s+(Number(e.amount)||0),0)); return {mm, inc, ex, pr:r2(inc-ex)}; });
+  const cats = ["ค่าไฟการไฟฟ้า","ค่าน้ำประปา","เงินเดือนแม่บ้าน","ซ่อมบำรุง","อินเทอร์เน็ต","ภาษี/ค่าธรรมเนียม","อื่นๆ"];
+  return `<div class="kpis">
+    <div class="card kpi"><div class="label">รายรับที่เก็บได้</div><div class="v">${baht(income)}</div><div class="small muted">เงินสด ${baht(cash)} · โอน ${baht(income-cash)}</div></div>
+    <div class="card kpi"><div class="label">ค้างชำระ</div><div class="v ${outstanding>0?"neg":""}">${baht(outstanding)}</div><div class="small muted">${bills.length-paid.length} ห้อง จากบิล ${bills.length}</div></div>
+    <div class="card kpi"><div class="label">รายจ่าย</div><div class="v">${baht(expense)}</div><div class="small muted">${exps.length} รายการ</div></div>
+    <div class="card kpi"><div class="label">กำไรสุทธิ</div><div class="v ${profit>=0?"pos":"neg"}">${profit<0?"−":""}${baht(Math.abs(profit))}</div><div class="small muted">อัตราเข้าพัก ${total?Math.round(occ/total*100):0}% (${occ}/${total})</div></div>
+  </div>
+  <div class="twocol">
+    <div class="card"><h2 class="sec">รายรับ รายจ่าย 12 เดือน</h2><div class="chartwrap">${chart(series)}</div>
+      <div class="legend"><span><i style="background:var(--paid)"></i>รายรับ</span><span><i style="background:var(--muted)"></i>รายจ่าย</span><span><i style="background:var(--accent);height:3px;vertical-align:3px"></i>กำไร</span></div></div>
+    <div class="card"><h2 class="sec">รายรับแยกประเภท</h2><div class="brk">${parts.map(([l,v])=>`<div><div class="l"><span>${l}</span><span class="num">${baht(v)}</span></div><div class="t"><i style="width:${v/pmax*100}%"></i></div></div>`).join("")}</div></div>
+  </div>
+  <div class="twocol" style="margin-top:14px">
+    <div class="card"><h2 class="sec">รายจ่าย ${esc(monthTH(m))}</h2>
+      <div class="list">${exps.length?exps.map(e=>`<div class="li"><div class="grow"><div>${esc(e.cat)}</div><div class="small muted">${esc(e.note||"")}</div></div><span class="amt">${baht(e.amount)}</span><button class="btn sm ghost" data-act="delExp" data-v="${esc(e.id)}" aria-label="ลบรายการ">ลบ</button></div>`).join(""):`<p class="muted small">ยังไม่มีรายจ่ายเดือนนี้</p>`}</div></div>
+    <div class="card"><h2 class="sec">เพิ่มรายจ่าย</h2>
+      <form class="form" id="expForm">
+        <div><label class="small muted" for="exCat">ประเภท</label><select class="inp" id="exCat">${cats.map(c=>`<option>${c}</option>`).join("")}</select></div>
+        <div class="g2"><div><label class="small muted" for="exAmt">จำนวนเงิน (บาท)</label><input class="inp num" id="exAmt" inputmode="decimal" required></div>
+        <div><label class="small muted" for="exDate">วันที่</label><input class="inp" id="exDate" type="date" value="${m}-${pad(Math.min(28,new Date().getDate()))}"></div></div>
+        <div><label class="small muted" for="exNote">หมายเหตุ</label><input class="inp" id="exNote" placeholder="เช่น ใบแจ้งหนี้ กฟภ."></div>
+        <button class="btn pri" type="submit">เพิ่มรายจ่าย</button>
+      </form></div>
+  </div>`;
+}
+function chart(series){
+  const W=720,H=250,L=54,R=10,T=14,B=30; const iw=W-L-R, ih=H-T-B;
+  const maxV = Math.max(1000, ...series.flatMap(s=>[s.inc,s.ex,s.pr]));
+  const minV = Math.min(0, ...series.map(s=>s.pr));
+  const step = niceStep((maxV-minV)/4); const top = Math.ceil(maxV/step)*step, bot = Math.floor(minV/step)*step;
+  const y = v => T + ih - (v-bot)/(top-bot)*ih;
+  const bw = iw/series.length; const bar = Math.min(22, bw*0.34);
+  let g = "";
+  for(let v=bot; v<=top+1e-6; v+=step){ g += `<line class="gl" x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke-width="${v===0?1.4:0.8}"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end">${fmtK(v)}</text>`; }
+  let bars = "", pts = [];
+  series.forEach((s,i) => {
+    const cx = L + bw*i + bw/2;
+    bars += `<rect x="${cx-bar-1}" y="${Math.min(y(s.inc),y(0))}" width="${bar}" height="${Math.abs(y(0)-y(s.inc))}" rx="2" fill="var(--paid)"><title>รายรับ ${baht(s.inc)}</title></rect>`;
+    bars += `<rect x="${cx+1}" y="${Math.min(y(s.ex),y(0))}" width="${bar}" height="${Math.abs(y(0)-y(s.ex))}" rx="2" fill="var(--muted)" opacity=".55"><title>รายจ่าย ${baht(s.ex)}</title></rect>`;
+    bars += `<text x="${cx}" y="${H-10}" text-anchor="middle">${esc(monthTH(s.mm,true))}</text>`;
+    pts.push([cx, y(s.pr), s]);
+  });
+  const line = `<polyline points="${pts.map(p=>p[0]+","+p[1]).join(" ")}" fill="none" stroke="var(--accent)" stroke-width="2.2"/>` + pts.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="${i===pts.length-1?4.5:3}" fill="var(--accent)" stroke="var(--surface)" stroke-width="1.5"><title>กำไร ${baht(p[2].pr)}</title></circle>`).join("");
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" width="100%" style="min-width:560px" role="img" aria-label="กราฟรายรับรายจ่าย 12 เดือน">${g}${bars}${line}</svg>`;
+}
+function niceStep(x){ const p = Math.pow(10, Math.floor(Math.log10(Math.max(1,x)))); const n = x/p; return (n<=1?1:n<=2?2:n<=5?5:10)*p; }
+const fmtK = v => Math.abs(v)>=1000 ? (v/1000).toLocaleString("th-TH",{maximumFractionDigits:1})+"k" : String(v);
+
+function viewTenant(){
+  const apt = S.tenantApt;
+  const room = apt ? Object.values(S.rooms).find(r => (r.aptId||"").toUpperCase() === apt.toUpperCase()) : null;
+  let body = "";
+  if(S.tenantLoading) body = `<div class="card"><span class="spin"></span> กำลังค้นหา</div>`;
+  else if(apt && !room) body = `<div class="card"><p class="err" style="margin:0">ไม่พบ Apartment ID “${esc(apt)}” ตรวจตัวอักษรอีกครั้ง หรือสอบถามเจ้าของหอ</p></div>`;
+  if(room){
+    const all = Object.values(S.bills).filter(b=>b.room===room.no).sort((a,b)=>b.month.localeCompare(a.month));
+    const cur = all.find(b=>b.status!=="paid") || all[0];
+    body = (cur ? tenantBill(room, cur, all) : `<div class="card"><p class="muted" style="margin:0">ห้อง ${esc(room.no)} ยังไม่มีบิล รอเจ้าของหอจดมิเตอร์</p></div>`) + tenantRepairs(room);
+  }
+  return `<div class="stack tenantv">
+    <div class="card"><h2 class="sec">ลูกบ้านเช็กบิลและชำระเงิน</h2>
+      <p class="small muted" style="margin:0 0 10px">กรอก Apartment ID ที่ได้รับจากเจ้าของหอ เช่น <span class="aptid">${esc(S.mode==="tenant" ? "APT-101-XXXX" : ((roomsSorted()[0]||{}).aptId||"APT-101-XXXX"))}</span></p>
+      <form id="aptForm" class="row"><input class="inp num" id="aptIn" style="flex:1;min-width:0;text-transform:uppercase" placeholder="Apartment ID" value="${esc(apt)}" autocomplete="off"><button class="btn pri" type="submit">ดูบิล</button></form>
+    </div>${body}</div>`;
+}
+function tenantBill(room, b, all){
+  const busy = S.busy[b.id];
+  const step = b.status==="paid"?2 : b.status==="pending"?1 : 0;
+  const v = b.verify || {};
+  return `<div class="tcols"><div class="card"><div class="row" style="justify-content:space-between"><div><div class="label">ห้อง ${esc(room.no)} · ${esc(monthTH(b.month))}</div><h2 style="font-size:19px">${esc(room.tenant)}</h2></div><span class="pill ${b.status}">${STATUS_TH[b.status]}</span></div>
+    <div class="steps" style="margin:12px 0"><span class="${step>=0?"on":""}">ออกบิล</span><span class="${step>=1?"on":""}">ส่งสลิป</span><span class="${step>=2?"on":""}">ชำระแล้ว</span></div>
+    ${billTable(b)}
+    ${b.status==="paid" ? `<div class="verify ok" style="margin-top:12px">ชำระแล้วเมื่อ ${dateTH(b.paidAt)} ${b.method==="cash"?"(เงินสด)":"(โอนเงิน)"} ขอบคุณครับ</div>` : `
+      <div class="sect"><div class="label">1. สแกนจ่ายด้วยแอปธนาคาร</div>${qrBlock(b)}
+      <div class="label">2. แนบสลิปการโอน</div>
+      ${b.status==="pending" ? verifyBox(b) : ""}
+      ${busy ? `<div class="verify"><span class="spin"></span> ${busy==="verify"?"กำลังอ่านยอดจากสลิป อาจใช้เวลาครึ่งนาที":"กำลังอัปโหลดสลิป"}</div>` :
+      `<label class="upload" for="slip-${esc(b.id)}"><input type="file" id="slip-${esc(b.id)}" accept="image/*" data-slip="${esc(b.id)}" data-by="tenant"><b>${b.status==="pending"?"ส่งสลิปใหม่":"เลือกรูปสลิป"}</b><span class="small muted">ระบบอ่านยอดเงินและอัปเดตสถานะให้อัตโนมัติ</span></label>`}
+      <p class="small muted" style="margin:0">จ่ายเงินสดได้ที่เจ้าของหอ สถานะจะอัปเดตเมื่อเจ้าของบันทึกรับเงิน</p></div>`}
+  </div>
+  ${receiptList(all)}</div>`;
+}
+function verifyBox(b){
+  const v = b.verify || {};
+  if(v.state==="checking") return `<div class="verify"><span class="spin"></span> กำลังตรวจสลิป</div>`;
+  const cls = v.state==="mismatch" ? "bad" : "";
+  return `<div class="verify ${cls}"><b>${v.state==="mismatch"?"สลิปไม่ผ่านการตรวจอัตโนมัติ":"ได้รับสลิปแล้ว"}</b><br>${esc(v.note||"รอเจ้าของหอตรวจ")}${v.amount?`<br>ยอดที่อ่านได้ <span class="num">${baht(v.amount)}</span>`:""}${v.ref?` · อ้างอิง <span class="num">${esc(v.ref)}</span>`:""}</div>`;
+}
+function qrBlock(b){
+  const st = S.settings, pp = st.promptpay, img = st.qrImg;
+  if(!img && !pp && !st.bankAcc) return `<div class="verify">เจ้าของหอยังไม่ได้ตั้งค่าช่องทางรับเงิน</div>`;
+  const qr = img ? `<img class="qrimg" src="${img}" alt="QR Code รับเงิน">`
+    : pp ? `<span class="pp">PromptPay</span><canvas data-qr="${esc(b.id)}" width="220" height="220" aria-label="QR พร้อมเพย์ ยอด ${baht(b.total)}"></canvas>` : "";
+  const box = qr ? `<div class="qrbox">${qr}<b style="font-size:20px;font-family:'IBM Plex Mono',monospace">${baht(b.total)}</b><span style="font-size:12.5px">${esc(st.accountName||"")}${pp&&!img?" · "+esc(maskPP(pp)):""}</span>${img?`<span style="font-size:12px">สแกนแล้วใส่ยอดให้ตรงกับบิล</span>`:""}</div>` : "";
+  const bank = st.bankAcc ? `<div class="bankline"><div style="min-width:0"><div class="small muted">โอนเข้าบัญชี${st.bank?" ธนาคาร"+esc(st.bank):""}</div><div class="num" style="font-size:17px;font-weight:600">${esc(st.bankAcc)}</div><div class="small">${esc(st.accountName||"")}</div></div><button class="btn sm" data-act="copy" data-v="${esc(String(st.bankAcc).replace(/[^0-9]/g,""))}">คัดลอกเลขบัญชี</button></div>` : "";
+  return box + bank;
+}
+const maskPP = p => { const d = String(p).replace(/\D/g,""); return d.length>6 ? d.slice(0,3)+"-xxx-"+d.slice(-4) : d; };
+function billTable(b){
+  return `<table class="bill"><tbody>
+    <tr><td>ค่าเช่าห้อง</td><td>${baht(b.rent)}</td></tr>
+    <tr><td>ค่าน้ำ<small>${nf(b.waterPrev)} → ${nf(b.waterCurr)} = ${nf(b.waterUnits)} ลบ.ม. × ${baht(b.waterRate)}${b.waterMin && b.water===b.waterMin && b.waterUnits*b.waterRate<b.waterMin?` (ขั้นต่ำ)`:""}</small></td><td>${baht(b.water)}</td></tr>
+    <tr><td>ค่าไฟ<small>${nf(b.elecPrev)} → ${nf(b.elecCurr)} = ${nf(b.elecUnits)} หน่วย × ${baht(b.elecRate)}</small></td><td>${baht(b.elec)}</td></tr>
+    <tr><td>ค่าขยะ</td><td>${baht(b.trash)}</td></tr>
+    ${b.other?`<tr><td>อื่นๆ<small>${esc(b.otherNote||"")}</small></td><td>${baht(b.other)}</td></tr>`:""}
+    <tr class="total"><td>รวมทั้งสิ้น<small>${esc(invNo(b))} · ครบกำหนด ${esc(dueDate(b.month).split("-").reverse().join("/"))}</small></td><td>${baht(b.total)}</td></tr>
+  </tbody></table>${(b.hasWaterPhoto||b.hasElecPhoto)?`<div class="sect"><div class="label">รูปมิเตอร์</div><div data-photos="${esc(b.id)}"><span class="spin"></span></div></div>`:""}`;
+}
+
+function viewSettings(){
+  const st = S.settings; const rs = roomsSorted();
+  return `<div class="setgrid">
+    <div class="card acct"><div class="row" style="justify-content:space-between"><div><h2 class="sec" style="margin:0">บัญชีเจ้าของหอ</h2><div class="small muted">${esc((S.user&&S.user.email)||"")}</div></div><div class="row"><button class="btn sm" data-act="copy" data-v="${esc(location.origin + location.pathname + "#tenant")}">คัดลอกลิงก์หน้าลูกบ้าน</button><button class="btn sm" data-act="logout">ออกจากระบบ</button></div></div></div>
+    ${st.demo?`<div class="card"><h2 class="sec">เริ่มใช้งานจริง</h2><p class="small muted" style="margin:0 0 10px">ลบห้อง บิล และรายจ่ายตัวอย่างทั้งหมด แล้วเริ่มกรอกหอพักของคุณ</p><button class="btn red" data-act="clearDemo" data-confirm="แตะอีกครั้งเพื่อลบข้อมูลตัวอย่าง">ล้างข้อมูลตัวอย่าง</button> <span class="small muted" id="clearProg"></span></div>`:""}
+    <div class="card setmain"><h2 class="sec">ข้อมูลหอพักและอัตราค่าบริการ</h2>
+      <form class="form" id="setForm">
+        <div class="g2"><div><label class="small muted" for="sName">ชื่อหอพัก</label><input class="inp" id="sName" value="${esc(st.name)}"></div>
+        <div><label class="small muted" for="sPrefix">รหัสหน้า Apartment ID</label><input class="inp num" id="sPrefix" value="${esc(st.prefix||"APT")}" maxlength="5"></div></div>
+        <div class="g2"><div><label class="small muted" for="sPP">พร้อมเพย์ (เบอร์มือถือ/เลขบัตร)</label><input class="inp num" id="sPP" inputmode="numeric" value="${esc(st.promptpay)}"></div>
+        <div><label class="small muted" for="sAcc">ชื่อบัญชีรับเงิน</label><input class="inp" id="sAcc" value="${esc(st.accountName)}"></div></div>
+        <div class="g2"><div><label class="small muted" for="sBank">ธนาคาร</label><select class="inp" id="sBank"><option value="">เลือกธนาคาร</option>${BANKS.map(x=>`<option ${st.bank===x?"selected":""}>${x}</option>`).join("")}</select></div>
+        <div><label class="small muted" for="sBankAcc">เลขที่บัญชี</label><input class="inp num" id="sBankAcc" inputmode="numeric" value="${esc(st.bankAcc||"")}" placeholder="xxx-x-xxxxx-x"></div></div>
+        <div><div class="small muted" style="margin-bottom:4px">รูป QR Code รับเงิน (จากแอปธนาคาร)</div>
+          <div class="qrset">${st.qrImg?`<img src="${st.qrImg}" alt="QR Code รับเงิน">`:`<div class="qrph">ยังไม่มีรูป</div>`}
+          <div style="display:grid;gap:8px;align-content:start;min-width:0"><label class="btn" for="qrUp" style="position:relative">${st.qrImg?"เปลี่ยนรูป QR":"อัปโหลดรูป QR"}<input type="file" id="qrUp" accept="image/*" data-qrup="1" style="position:absolute;width:1px;height:1px;opacity:0"></label>
+          ${st.qrImg?`<button class="btn ghost" type="button" data-act="delQR" data-confirm="แตะอีกครั้งเพื่อลบรูป">ลบรูป QR</button>`:""}
+          <span class="small muted">ถ้ามีรูป QR ลูกบ้านจะเห็นรูปนี้ ถ้าไม่มี ระบบสร้าง QR พร้อมเพย์ที่ใส่ยอดให้จากเบอร์ด้านบน</span></div></div></div>
+        <div class="g3">
+          <div><label class="small muted" for="sWR">ค่าน้ำ/ลบ.ม.</label><input class="inp num" id="sWR" inputmode="decimal" value="${st.waterRate}"></div>
+          <div><label class="small muted" for="sWM">ค่าน้ำขั้นต่ำ</label><input class="inp num" id="sWM" inputmode="decimal" value="${st.waterMin||0}"></div>
+          <div><label class="small muted" for="sER">ค่าไฟ/หน่วย</label><input class="inp num" id="sER" inputmode="decimal" value="${st.elecRate}"></div>
+          <div><label class="small muted" for="sTR">ค่าขยะ/เดือน</label><input class="inp num" id="sTR" inputmode="decimal" value="${st.trash}"></div>
+          <div><label class="small muted" for="sDD">ครบกำหนดวันที่</label><input class="inp num" id="sDD" inputmode="numeric" value="${st.dueDay||5}"></div>
+        </div>
+        <p class="small muted" style="margin:0">อัตราใหม่ใช้กับบิลที่จดหลังจากนี้ บิลเดิมคงอัตราเดิมไว้</p>
+        <button class="btn pri" type="submit">บันทึกการตั้งค่า</button>
+      </form></div>
+    <div class="card"><div class="row" style="justify-content:space-between;margin-bottom:8px"><h2 class="sec" style="margin:0">ห้องพัก (${rs.length})</h2><button class="btn sm pri" data-act="editRoom" data-v="">+ เพิ่มห้อง</button></div>
+      <div class="list">${rs.map(r=>`<div class="li"><span class="num" style="font-weight:600;width:44px">${esc(r.no)}</span><div class="grow"><div>${r.vacant?`<span class="muted">ห้องว่าง</span>`:esc(r.tenant)}</div><div class="small muted"><span class="num">${esc(r.aptId)}</span> · ค่าเช่า ${baht(r.rent)}</div></div><button class="btn sm" data-act="editRoom" data-v="${esc(r.no)}">แก้ไข</button></div>`).join("") || `<p class="muted small">ยังไม่มีห้อง</p>`}</div></div>
+    <div class="card"><h2 class="sec">สร้างห้องทั้งชั้น</h2>
+      <form class="form" id="floorForm"><div class="g3">
+        <div><label class="small muted" for="fF">ชั้น</label><input class="inp num" id="fF" inputmode="numeric" value="${(Math.max(0,...rs.map(r=>r.floor))||0)+1}"></div>
+        <div><label class="small muted" for="fN">จำนวนห้อง</label><input class="inp num" id="fN" inputmode="numeric" value="8"></div>
+        <div><label class="small muted" for="fR">ค่าเช่า</label><input class="inp num" id="fR" inputmode="numeric" value="3500"></div>
+      </div><p class="small muted" style="margin:0">ได้เลขห้องแบบ ชั้น + ลำดับ เช่น 301–308 เป็นห้องว่างรอใส่ชื่อผู้เช่า</p><button class="btn" type="submit">สร้างห้อง</button></form></div>
+  </div>`;
+}
+
+/* ---------- sheet ---------- */
+function openSheet(s){ S.sheet = s; renderSheet(); }
+function closeSheet(){ S.sheet = null; renderSheet(); }
+function renderSheet(){
+  const root = $("#sheetRoot");
+  if(!S.sheet){ root.innerHTML = ""; return; }
+  const ae = document.activeElement;
+  if(ae && root.contains(ae) && ["INPUT","TEXTAREA","SELECT"].includes(ae.tagName) && ae.type!=="file") return;
+  const html = S.sheet.kind==="repair" ? sheetRepair(S.sheet.id) : S.sheet.kind==="newRepair" ? sheetNewRepair() : S.sheet.kind==="rc" ? sheetReceipt(S.sheet.id) : S.sheet.kind==="rcimg" ? `<div class="shead"><h2 style="font-size:17px">ใบเสร็จรับเงิน</h2><button class="x" data-act="close" aria-label="ปิด">×</button></div><p class="small muted" style="margin:0 0 10px">บันทึกไฟล์ PDF ในหน้านี้ไม่ได้ กดค้างที่รูปใบเสร็จเพื่อบันทึกรูป แล้วสั่งพิมพ์จากแกลเลอรี</p><div style="display:grid;gap:12px">${S.sheet.imgs.map(im=>`<img src="${im.url}" alt="ใบเสร็จ" style="width:100%;border:1px solid var(--line);border-radius:6px">`).join("")}</div>` : S.sheet.kind==="room" ? sheetRoom(S.sheet.no) + roomRepairsMini(S.sheet.no) : S.sheet.kind==="img" ? `<div class="shead"><h2 style="font-size:17px">รูปภาพ</h2><button class="x" data-act="close" aria-label="ปิด">×</button></div><img src="${S.sheet.src}" alt="รูปมิเตอร์" style="width:100%;border-radius:8px">` : sheetEditRoom(S.sheet.no);
+  root.innerHTML = `<div class="overlay" data-act="closeBg"><div class="sheet" role="dialog" aria-modal="true"><div class="grab"></div>${html}</div></div>`;
+  loadPhotos(); loadRepairPhotos();
+  root.querySelectorAll(".rcwrap").forEach(w => { const sc = w.querySelector(".rcscale"); if(sc) sc.style.transform = `scale(${w.clientWidth/560})`; });
+  root.querySelectorAll("canvas[data-qr]").forEach(c => { const b = S.bills[c.dataset.qr]; const p = b && ppPayload(S.settings.promptpay, b.total); if(p) drawQR(c,p); });
+  if(S.sheet.kind==="room"){ const b = billOf(S.sheet.no); if(b && (b.status!=="unpaid" || S.sheet.showSlip)) loadSlipInto(b.id); }
+}
+async function loadSlipInto(id){
+  const box = document.getElementById("slipbox"); if(!box || box.dataset.loaded===id) return; box.dataset.loaded = id;
+  const s = await getSlip(id).catch(()=>null);
+  const el = document.getElementById("slipbox"); if(!el) return;
+  el.innerHTML = s && s.img ? `<img class="slipimg" src="${s.img}" alt="สลิปโอนเงิน"><div class="small muted" style="text-align:center">ส่งเมื่อ ${dateTH(s.at)}</div>` : `<div class="small muted">ไม่มีรูปสลิป</div>`;
+}
+function sheetReceipt(id){
+  const b = S.bills[id]; if(!b) return "";
+  return `<div class="shead"><div><div class="label">ใบเสร็จรับเงิน</div><h2 style="font-size:18px">${esc(monthTH(b.month))}</h2></div><button class="x" data-act="close" aria-label="ปิด">×</button></div>
+    <div class="rcwrap"><div class="rcscale">${receiptHTML(b)}</div></div>
+    <div class="actions"><button class="btn pri full" data-act="rcOne" data-v="${esc(id)}">พิมพ์ใบเสร็จนี้ (PDF)</button></div>`;
+}
+function sheetRoom(no){
+  const r = S.rooms[no]; if(!r) return "";
+  const b = billOf(no); const s = statusOf(r); const busy = b && S.busy[b.id];
+  const head = `<div class="shead"><div><div class="label">ห้อง</div><div class="no">${esc(no)}</div></div><div style="min-width:0"><h2 style="font-size:18px">${r.vacant?"ห้องว่าง":esc(r.tenant)}</h2><div class="small muted">${esc(monthTH(S.month))}</div><span class="pill ${b?b.status:"none"}" style="margin-top:4px">${STATUS_TH[s]}</span></div><button class="x" data-act="close" aria-label="ปิด">×</button></div>
+    <dl class="kv"><dt>Apartment ID</dt><dd><span class="aptid">${esc(r.aptId)}</span> <button class="btn sm ghost" data-act="copy" data-v="${esc(r.aptId)}">คัดลอก</button> <button class="btn sm ghost" data-act="copyLink" data-v="${esc(r.aptId)}">คัดลอกลิงก์ลูกบ้าน</button></dd>${r.phone?`<dt>โทร</dt><dd class="num">${esc(r.phone)}</dd>`:""}<dt>ค่าเช่า</dt><dd>${baht(r.rent)}/เดือน</dd></dl>`;
+  if(r.vacant) return head + `<div class="actions"><button class="btn pri full" data-act="editRoom" data-v="${esc(no)}">ใส่ชื่อผู้เช่า</button></div>`;
+  if(!b) return head + `<div class="sect"><div class="verify">ยังไม่ได้จดมิเตอร์เดือนนี้</div></div><div class="actions"><button class="btn pri full" data-act="goMeter" data-v="${esc(no)}">จดมิเตอร์ห้องนี้</button><button class="btn full" data-act="editRoom" data-v="${esc(no)}">แก้ไขข้อมูลห้อง</button></div>`;
+  let body = `<div class="sect">${billTable(b)}</div>`;
+  if(b.status==="unpaid"){
+    body += `<div class="sect"><div class="row"><div style="flex:1;min-width:120px"><label class="small muted" for="oAmt">ค่าอื่นๆ (บาท)</label><input class="inp num" id="oAmt" inputmode="decimal" value="${b.other||""}" placeholder="0"></div><div style="flex:2;min-width:150px"><label class="small muted" for="oNote">รายละเอียด</label><input class="inp" id="oNote" value="${esc(b.otherNote||"")}" placeholder="เช่น ค่าปรับ ค่าซ่อม"></div></div><button class="btn sm" data-act="saveOther" data-v="${esc(b.id)}">อัปเดตค่าอื่นๆ</button></div>`;
+    body += S.sheet.showQR ? `<div class="sect">${qrBlock(b)}</div>` : "";
+    body += busy ? `<div class="sect"><div class="verify"><span class="spin"></span> กำลังตรวจสลิป</div></div>` : "";
+    body += `<div class="actions">
+      <button class="btn yel" data-act="cash" data-v="${esc(b.id)}">รับเงินสด</button>
+      <button class="btn" data-act="toggleQR">${S.sheet.showQR?"ซ่อน QR":"แสดง QR รับเงิน"}</button>
+      <label class="btn" for="oslip" style="position:relative">แนบสลิปแทนลูกบ้าน<input type="file" id="oslip" accept="image/*" data-slip="${esc(b.id)}" data-by="owner" style="position:absolute;width:1px;height:1px;opacity:0"></label>
+      <button class="btn" data-act="copyBill" data-v="${esc(b.id)}">คัดลอกบิลส่ง LINE</button>
+      <button class="btn ghost full" data-act="goMeter" data-v="${esc(no)}">แก้เลขมิเตอร์</button></div>`;
+  } else if(b.status==="pending"){
+    body += `<div class="sect"><div class="label">สลิปที่ได้รับ</div><div id="slipbox"><span class="spin"></span></div>${busy?`<div class="verify"><span class="spin"></span> กำลังอ่านยอดจากสลิป</div>`:verifyBox(b)}</div>
+      <div class="actions"><button class="btn yel" data-act="approve" data-v="${esc(b.id)}">ยืนยันรับเงิน</button><button class="btn" data-act="reject" data-v="${esc(b.id)}" data-confirm="แตะอีกครั้งเพื่อปฏิเสธ">ปฏิเสธสลิป</button>
+      ${S.sample?`<button class="btn full" data-act="recheck" data-v="${esc(b.id)}" ${busy?"disabled":""}>ตรวจสลิปอัตโนมัติอีกครั้ง</button>`:""}</div>`;
+  } else {
+    const v = b.verify||{};
+    body += `<div class="sect"><div class="verify ok"><b>ชำระแล้ว</b> ${dateTH(b.paidAt)} · ${b.method==="cash"?"เงินสด":"โอนเงิน"}${v.state==="auto-ok"?`<br>ตรวจสลิปอัตโนมัติ: ${esc(v.note||"")}${v.ref?` · อ้างอิง <span class="num">${esc(v.ref)}</span>`:""}`:v.state==="owner-ok"?"<br>เจ้าของหอยืนยันรับเงิน":""}</div>${b.method==="transfer"?`<div id="slipbox"><span class="spin"></span></div>`:""}</div>
+      <div class="actions"><button class="btn pri full" data-act="rcView" data-v="${esc(b.id)}">ดูและพิมพ์ใบเสร็จ</button><button class="btn" data-act="copyBill" data-v="${esc(b.id)}">คัดลอกใบเสร็จ</button><button class="btn" data-act="unpay" data-v="${esc(b.id)}" data-confirm="แตะอีกครั้งเพื่อยกเลิก">ยกเลิกการชำระ</button></div>`;
+  }
+  return head + body;
+}
+function sheetEditRoom(no){
+  const r = no ? S.rooms[no] : null;
+  const d = r || {no:"", floor:"", tenant:"", phone:"", rent:3500, waterStart:0, elecStart:0, vacant:false, aptId:""};
+  return `<div class="shead"><h2 style="font-size:19px">${r?"แก้ไขห้อง "+esc(no):"เพิ่มห้องใหม่"}</h2><button class="x" data-act="close" aria-label="ปิด">×</button></div>
+  <form class="form" id="roomForm" data-orig="${esc(no||"")}">
+    <div class="g2"><div><label class="small muted" for="rNo">เลขห้อง</label><input class="inp num" id="rNo" value="${esc(d.no)}" ${r?"readonly":""} required placeholder="เช่น 101"></div>
+    <div><label class="small muted" for="rRent">ค่าเช่า/เดือน</label><input class="inp num" id="rRent" inputmode="numeric" value="${d.rent}"></div></div>
+    <label class="row small"><input type="checkbox" id="rVac" ${d.vacant?"checked":""}> ห้องว่าง ไม่มีผู้เช่า</label>
+    <div class="g2"><div><label class="small muted" for="rTen">ชื่อลูกบ้าน</label><input class="inp" id="rTen" value="${esc(d.tenant)}"></div>
+    <div><label class="small muted" for="rPh">เบอร์โทร</label><input class="inp num" id="rPh" inputmode="tel" value="${esc(d.phone)}"></div></div>
+    <div class="g2"><div><label class="small muted" for="rWS">มิเตอร์น้ำเริ่มต้น</label><input class="inp num" id="rWS" inputmode="numeric" value="${d.waterStart||0}"></div>
+    <div><label class="small muted" for="rES">มิเตอร์ไฟเริ่มต้น</label><input class="inp num" id="rES" inputmode="numeric" value="${d.elecStart||0}"></div></div>
+    ${r?`<div class="row small"><span class="muted">Apartment ID</span><span class="aptid">${esc(d.aptId)}</span><label class="row"><input type="checkbox" id="rNewId"> สร้างรหัสใหม่ (ใช้เมื่อเปลี่ยนผู้เช่า)</label></div>`:`<p class="small muted" style="margin:0">ระบบสร้าง Apartment ID ให้ลูกบ้านใช้เช็กบิลอัตโนมัติ</p>`}
+    <div class="actions" style="margin-top:4px"><button class="btn pri ${r?"":"full"}" type="submit">บันทึก</button>${r?`<button class="btn" type="button" data-act="delRoom" data-v="${esc(no)}" data-confirm="แตะอีกครั้งเพื่อลบห้อง">ลบห้อง</button>`:""}</div>
+  </form>`;
+}
+
+/* ---------- actions ---------- */
+function toast(t){ const el = document.createElement("div"); el.className="toast"; el.setAttribute("role","status"); el.textContent=t; const r=$("#toastRoot"); r.innerHTML=""; r.appendChild(el); clearTimeout(toast._t); toast._t=setTimeout(()=>el.remove(),2600); }
+async function copyText(t){ try{ await navigator.clipboard.writeText(t); toast("คัดลอกแล้ว"); } catch(e){ const ta=document.createElement("textarea"); ta.value=t; ta.className="inp"; ta.rows=8; $("#toastRoot").innerHTML=""; const s=$(".sheet"); if(s){ s.appendChild(ta); ta.select(); toast("กดค้างที่ข้อความเพื่อคัดลอก"); } } }
+
+/* ---------- repairs ---------- */
+const REP_CATS = ["ไฟฟ้า","ประปา","แอร์","ประตู/หน้าต่าง/กุญแจ","เฟอร์นิเจอร์","อินเทอร์เน็ต","สุขภัณฑ์","อื่นๆ"];
+const REP_TH = {new:"รอรับเรื่อง", scheduled:"นัดซ่อมแล้ว", done:"ซ่อมเสร็จ", cancelled:"ยกเลิก"};
+const todayYMD = () => { const d = new Date(); return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); };
+const ymdTH = y => { if(!y) return "—"; const [a,b,c] = String(y).slice(0,10).split("-").map(Number); return new Intl.DateTimeFormat("th-TH",{day:"numeric",month:"short",year:"2-digit"}).format(new Date(a,b-1,c)); };
+const daysSince = y => Math.max(0, Math.round((new Date(todayYMD()) - new Date(String(y).slice(0,10))) / 86400000));
+const repSort = (a,b) => ({new:0,scheduled:1,done:2,cancelled:3}[a.status]-({new:0,scheduled:1,done:2,cancelled:3}[b.status])) || String(b.reportedAt).localeCompare(String(a.reportedAt));
+function repDates(r){
+  return `<dl class="rdates"><div><dt>วันที่แจ้ง</dt><dd>${ymdTH(r.reportedAt)}</dd></div><div><dt>วันที่นัดซ่อม</dt><dd>${ymdTH(r.scheduledAt)}</dd></div><div><dt>วันที่ซ่อมเสร็จ</dt><dd>${ymdTH(r.doneAt)}</dd></div></dl>`;
+}
+function repCard(r, owner){
+  const room = S.rooms[r.room] || {};
+  const late = r.status==="new" && daysSince(r.reportedAt) >= 3;
+  return `<article class="rcard st-${r.status}" ${owner?`data-act="openRepair" data-v="${esc(r.id)}" tabindex="0" role="button"`:""}>
+    <div class="rtop">${owner?`<span class="rno num">${esc(r.room)}</span>`:""}<div style="min-width:0;flex:1"><div class="rcat">${esc(r.cat)}</div>${owner?`<div class="small muted" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(room.tenant||"")}</div>`:""}</div><span class="rpill ${r.status}">${REP_TH[r.status]}</span></div>
+    <p class="rnote">${esc(r.note)}</p>
+    ${repDates(r)}
+    ${r.ownerNote?`<div class="rowner"><b>บันทึกจากเจ้าของหอ:</b> ${esc(r.ownerNote)}</div>`:""}
+    ${late?`<div class="small" style="color:var(--unpaid)">แจ้งมาแล้ว ${daysSince(r.reportedAt)} วัน ยังไม่ได้นัด</div>`:""}
+    ${r.hasPhoto?`<div data-rphoto="${esc(r.id)}" class="rph"></div>`:""}
+    ${!owner && r.status==="new"?`<button class="btn sm ghost" data-act="cancelRepair" data-v="${esc(r.id)}" data-confirm="แตะอีกครั้งเพื่อยกเลิก">ยกเลิกการแจ้ง</button>`:""}
+  </article>`;
+}
+function viewRepairs(){
+  const all = Object.values(S.repairs).sort(repSort);
+  const cnt = k => all.filter(r=>r.status===k).length;
+  const list = all.filter(r => S.repFilter==="all" ? true : S.repFilter==="open" ? (r.status==="new"||r.status==="scheduled") : r.status===S.repFilter);
+  const costMonth = all.filter(r=>r.status==="done" && String(r.doneAt).slice(0,7)===S.month).reduce((a,r)=>a+(Number(r.cost)||0),0);
+  const f = (k,l,n) => `<button class="chip" data-act="repFilter" data-v="${k}" aria-pressed="${S.repFilter===k}">${l} <b class="num">${n}</b></button>`;
+  return `<div class="row" style="justify-content:space-between;margin-bottom:12px"><div><h2 style="font-size:19px">แจ้งซ่อม</h2><div class="small muted">ค่าซ่อมที่เสร็จใน${esc(monthTH(S.month))} ${baht(costMonth)}</div></div><button class="btn pri" data-act="newRepair">+ บันทึกแจ้งซ่อม</button></div>
+    <div class="chips scrollchips" style="margin-bottom:14px">${f("open","ค้างอยู่",cnt("new")+cnt("scheduled"))}${f("new","รอรับเรื่อง",cnt("new"))}${f("scheduled","นัดซ่อมแล้ว",cnt("scheduled"))}${f("done","ซ่อมเสร็จ",cnt("done"))}${f("all","ทั้งหมด",all.length)}</div>
+    ${list.length ? `<div class="rgrid">${list.map(r=>repCard(r,true)).join("")}</div>` : `<div class="card empty"><h2>ไม่มีรายการ</h2><p class="small muted" style="margin:0">ลูกบ้านแจ้งซ่อมได้จากหน้าลูกบ้าน หรือกด “บันทึกแจ้งซ่อม” เพื่อบันทึกแทน</p></div>`}`;
+}
+function repForm(prefix, withRoom){
+  const rs = occupied();
+  return `<form class="form" id="${prefix}Form">
+    ${withRoom?`<div><label class="small muted" for="${prefix}Room">ห้อง</label><select class="inp" id="${prefix}Room" required>${rs.map(r=>`<option value="${esc(r.no)}">${esc(r.no)} · ${esc(r.tenant)}</option>`).join("")}</select></div>`:""}
+    <div class="g2"><div><label class="small muted" for="${prefix}Cat">ประเภท</label><select class="inp" id="${prefix}Cat">${REP_CATS.map(c=>`<option>${c}</option>`).join("")}</select></div>
+    <div><label class="small muted" for="${prefix}Date">วันที่แจ้ง</label><input class="inp" type="date" id="${prefix}Date" value="${todayYMD()}" max="${todayYMD()}"></div></div>
+    <div><label class="small muted" for="${prefix}Note">รายละเอียด (Note)</label><textarea class="inp" id="${prefix}Note" rows="3" required placeholder="เช่น ก๊อกน้ำห้องน้ำรั่ว น้ำหยดตลอด"></textarea></div>
+    <label class="upload" for="${prefix}Photo" style="padding:12px"><input type="file" id="${prefix}Photo" accept="image/*" data-repphoto="${prefix}"><b id="${prefix}PhotoLbl">${S.repDraftPhoto&&S.repDraftPhoto[prefix]?"แนบรูปแล้ว แตะเพื่อเปลี่ยน":"แนบรูปประกอบ (ถ้ามี)"}</b></label>
+    <button class="btn pri" type="submit">ส่งแจ้งซ่อม</button>
+  </form>`;
+}
+function tenantRepairs(room){
+  const mine = Object.values(S.repairs).filter(r=>r.room===room.no).sort(repSort).slice(0,10);
+  return `<div class="tcols"><div class="card"><h2 class="sec">แจ้งซ่อม</h2>${repForm("tr", false)}</div>
+    <div class="card"><h2 class="sec">รายการแจ้งซ่อมของห้อง ${esc(room.no)}</h2>${mine.length?`<div class="rgrid one">${mine.map(r=>repCard(r,false)).join("")}</div>`:`<p class="small muted" style="margin:0">ยังไม่มีรายการแจ้งซ่อม</p>`}</div></div>`;
+}
+function roomRepairsMini(no){
+  const open = Object.values(S.repairs).filter(r=>r.room===no && (r.status==="new"||r.status==="scheduled")).sort(repSort);
+  if(!open.length) return "";
+  return `<div class="sect"><div class="label">แจ้งซ่อมที่ค้างอยู่</div>${open.map(r=>`<button class="li" style="width:100%;border:0;border-bottom:1px solid var(--line);background:none;text-align:left;cursor:pointer" data-act="openRepair" data-v="${esc(r.id)}"><span class="grow"><b>${esc(r.cat)}</b> <span class="small muted">${esc(r.note)}</span></span><span class="rpill ${r.status}">${REP_TH[r.status]}</span></button>`).join("")}</div>`;
+}
+function sheetNewRepair(){
+  return `<div class="shead"><h2 style="font-size:19px">บันทึกแจ้งซ่อมแทนลูกบ้าน</h2><button class="x" data-act="close" aria-label="ปิด">×</button></div>${repForm("or", true)}`;
+}
+function sheetRepair(id){
+  const r = S.repairs[id]; if(!r) return `<div class="shead"><h2>ไม่พบรายการ</h2><button class="x" data-act="close" aria-label="ปิด">×</button></div>`;
+  const room = S.rooms[r.room] || {};
+  return `<div class="shead"><div><div class="label">ห้อง ${esc(r.room)} · ${esc(room.tenant||"")}</div><h2 style="font-size:19px">${esc(r.cat)}</h2><span class="rpill ${r.status}" style="margin-top:4px">${REP_TH[r.status]}</span></div><button class="x" data-act="close" aria-label="ปิด">×</button></div>
+    <div class="sect" style="margin-top:0"><div class="label">รายละเอียดจากผู้แจ้ง</div><p class="rnote" style="margin:0">${esc(r.note)}</p>${r.hasPhoto?`<div data-rphoto="${esc(r.id)}" class="rph big"></div>`:""}</div>
+    <form class="form sect" id="repEdit" data-id="${esc(id)}">
+      <div class="g2"><div><label class="small muted" for="reStatus">สถานะ</label><select class="inp" id="reStatus">${["new","scheduled","done","cancelled"].map(k=>`<option value="${k}" ${r.status===k?"selected":""}>${REP_TH[k]}</option>`).join("")}</select></div>
+      <div><label class="small muted" for="reRep">วันที่แจ้ง</label><input class="inp" type="date" id="reRep" value="${esc(String(r.reportedAt).slice(0,10))}"></div></div>
+      <div class="g2"><div><label class="small muted" for="reSch">วันที่นัดซ่อม</label><input class="inp" type="date" id="reSch" value="${esc(r.scheduledAt||"")}"></div>
+      <div><label class="small muted" for="reDone">วันที่ซ่อมเสร็จ</label><input class="inp" type="date" id="reDone" value="${esc(r.doneAt||"")}"></div></div>
+      <div><label class="small muted" for="reNote">บันทึกของเจ้าของหอ (ลูกบ้านเห็นข้อความนี้)</label><textarea class="inp" id="reNote" rows="3" placeholder="เช่น ช่างเข้าช่วงบ่าย เปลี่ยนวาล์วใหม่">${esc(r.ownerNote||"")}</textarea></div>
+      <div class="g2"><div><label class="small muted" for="reCost">ค่าใช้จ่ายซ่อม (บาท)</label><input class="inp num" id="reCost" inputmode="decimal" value="${r.cost||""}" placeholder="0"></div>
+      <label class="row small" style="align-self:end;min-height:42px"><input type="checkbox" id="reExp" ${r.expenseId?"checked disabled":"checked"}> ${r.expenseId?"บันทึกเป็นรายจ่ายแล้ว":"บันทึกเป็นรายจ่ายเมื่อซ่อมเสร็จ"}</label></div>
+      <div class="actions" style="margin-top:4px"><button class="btn pri" type="submit">บันทึก</button><button class="btn" type="button" data-act="quickDone" data-v="${esc(id)}">ซ่อมเสร็จวันนี้</button>
+      <button class="btn ghost full" type="button" data-act="delRepair" data-v="${esc(id)}" data-confirm="แตะอีกครั้งเพื่อลบรายการ">ลบรายการ</button></div>
+    </form>`;
+}
+async function loadRepairPhotos(){
+  document.querySelectorAll("[data-rphoto]").forEach(async box => {
+    const id = box.dataset.rphoto; if(box.dataset.loaded) return; box.dataset.loaded = "1";
+    let p = S.photoCache["rp_"+id]; if(!p){ p = await getDoc("repairPhotos", id).catch(()=>null); if(p) S.photoCache["rp_"+id] = p; }
+    if(box.isConnected && p && p.img) box.innerHTML = `<img src="${p.img}" alt="รูปประกอบแจ้งซ่อม" data-act="zoomRow">`;
+  });
+}
+async function submitRepair(prefix, room){
+  const note = $("#"+prefix+"Note").value.trim(); if(!note) return toast("ใส่รายละเอียดที่ต้องการซ่อม");
+  const id = "rp" + Date.now().toString(36) + Math.random().toString(36).slice(2,5);
+  const photo = S.repDraftPhoto && S.repDraftPhoto[prefix];
+  const data = {id, room, cat:$("#"+prefix+"Cat").value, note, reportedAt:$("#"+prefix+"Date").value || todayYMD(), status:"new", scheduledAt:"", doneAt:"", ownerNote:"", cost:0, hasPhoto:!!photo, by: prefix==="tr"?"tenant":"owner", createdAt:new Date().toISOString()};
+  document.activeElement && document.activeElement.blur && document.activeElement.blur();
+  if(S.mode==="tenant"){
+    const { data: rid, error } = await sb.rpc("dorm_tenant_new_repair", {p_apt:S.tenantApt, p_cat:data.cat, p_note:note, p_reported:data.reportedAt, p_img:photo||null});
+    if(error || !rid) return toast("ส่งแจ้งซ่อมไม่สำเร็จ ลองอีกครั้ง");
+    if(photo) S.photoCache["rp_"+rid] = {img:photo};
+    if(S.repDraftPhoto) delete S.repDraftPhoto[prefix];
+    toast("ส่งแจ้งซ่อมแล้ว"); await loadTenant(S.tenantApt); render(); return;
+  }
+  if(photo){ const ok = await safe(async()=>{ await put("repairPhotos", id, {img:photo}); return true; }); if(!ok) return; S.photoCache["rp_"+id] = {img:photo}; }
+  const ok = await safe(async()=>{ await put("repairs", id, data); return true; }); if(!ok) return;
+  if(S.repDraftPhoto) delete S.repDraftPhoto[prefix];
+  const f = $("#"+prefix+"Form"); if(f) f.reset();
+  if(prefix==="or") closeSheet();
+  toast("ส่งแจ้งซ่อมแล้ว"); render();
+}
+async function saveRepair(id, forceDone){
+  const r = S.repairs[id]; if(!r) return;
+  let status = forceDone ? "done" : $("#reStatus").value;
+  let sch = forceDone ? (r.scheduledAt || todayYMD()) : $("#reSch").value;
+  let done = forceDone ? todayYMD() : $("#reDone").value;
+  if(!forceDone){ if(done && status!=="cancelled") status = "done"; else if(sch && status==="new") status = "scheduled"; }
+  if(status==="done" && !done) done = todayYMD();
+  const cost = forceDone ? (Number($("#reCost") && $("#reCost").value)||r.cost||0) : r2(Number($("#reCost").value)||0);
+  const wantExp = $("#reExp") ? $("#reExp").checked : true;
+  const upd = {...r, status, scheduledAt:sch||"", doneAt: status==="done" ? done : (done||""), ownerNote: forceDone ? (($("#reNote")&&$("#reNote").value.trim())||r.ownerNote||"") : $("#reNote").value.trim(), cost, reportedAt: forceDone ? r.reportedAt : ($("#reRep").value || r.reportedAt)};
+  document.activeElement && document.activeElement.blur && document.activeElement.blur();
+  if(status==="done" && cost>0 && wantExp && !r.expenseId){
+    const eid = "e" + Date.now().toString(36);
+    const ok = await safe(async()=>{ await put("expenses", eid, {id:eid, month:upd.doneAt.slice(0,7), date:upd.doneAt, cat:"ซ่อมบำรุง", amount:cost, note:`ห้อง ${r.room} · ${r.cat}`}); return true; });
+    if(ok) upd.expenseId = eid;
+  }
+  const ok = await safe(async()=>{ await put("repairs", id, upd); return true; }); if(!ok) return;
+  closeSheet(); toast(status==="done" ? "บันทึกซ่อมเสร็จแล้ว" + (upd.expenseId && !r.expenseId ? " และเพิ่มในรายจ่าย" : "") : "บันทึกแล้ว");
+}
+
+/* ---------- receipts ---------- */
+function bahtText(n){
+  n = r2(n); const d = ["","หนึ่ง","สอง","สาม","สี่","ห้า","หก","เจ็ด","แปด","เก้า"], p = ["","สิบ","ร้อย","พัน","หมื่น","แสน"];
+  const grp = x => { let s = "", str = String(x), L = str.length;
+    for(let i=0;i<L;i++){ const c = +str[i], pos = L-i-1; if(!c) continue;
+      if(pos===1 && c===1) s += "สิบ"; else if(pos===1 && c===2) s += "ยี่สิบ"; else if(pos===0 && c===1 && L>1) s += "เอ็ด"; else s += d[c] + p[pos]; }
+    return s; };
+  const read = x => { if(x===0) return "ศูนย์"; let out = "", m = 0; const parts = [];
+    while(x>0){ parts.unshift(x % 1000000); x = Math.floor(x/1000000); }
+    parts.forEach((g,i)=>{ if(g) out += grp(g); if(i<parts.length-1) out += "ล้าน"; }); return out; };
+  const b = Math.floor(n), st = Math.round((n-b)*100);
+  return read(b) + "บาท" + (st ? read(st) + "สตางค์" : "ถ้วน");
+}
+const rcNo = b => "RC-" + b.month.slice(2).replace("-","") + "-" + b.room;
+function receiptHTML(b){
+  const st = S.settings, r = S.rooms[b.room] || {};
+  const row = (l, sub, v) => `<tr><td style="padding:7px 0;border-bottom:1px solid #DDE3E0">${l}${sub?`<div style="font-size:11px;color:#6B7772">${sub}</div>`:""}</td><td style="padding:7px 0;border-bottom:1px solid #DDE3E0;text-align:right;font-family:'IBM Plex Mono',monospace">${baht(v)}</td></tr>`;
+  const v = b.verify || {};
+  return `<div class="rc" style="width:560px;min-height:780px;box-sizing:border-box;padding:36px 36px 30px;background:#FFFFFF;color:#15221E;font-family:'IBM Plex Sans Thai',sans-serif;font-size:13px;line-height:1.5;display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;border-bottom:2px solid #0E5A4C;padding-bottom:12px">
+      <div><div style="font-family:'Anuphan',sans-serif;font-size:20px;font-weight:700">${esc(st.name||"หอพัก")}</div>${st.accountName?`<div style="font-size:12px;color:#6B7772">${esc(st.accountName)}</div>`:""}</div>
+      <div style="text-align:right"><div style="font-family:'Anuphan',sans-serif;font-size:18px;font-weight:700;color:#0E5A4C">ใบเสร็จรับเงิน</div><div style="font-size:11px;letter-spacing:.12em;color:#6B7772">RECEIPT</div></div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 18px;font-size:12.5px">
+      <div><span style="color:#6B7772">เลขที่</span> <b style="font-family:'IBM Plex Mono',monospace">${esc(rcNo(b))}</b></div>
+      <div><span style="color:#6B7772">วันที่รับเงิน</span> <b>${esc(dateTH(b.paidAt))}</b></div>
+      <div><span style="color:#6B7772">ได้รับเงินจาก</span> <b>${esc(r.tenant||"-")}</b></div>
+      <div><span style="color:#6B7772">ห้อง</span> <b style="font-family:'IBM Plex Mono',monospace">${esc(b.room)}</b> <span style="color:#6B7772">· ${esc(r.aptId||"")}</span></div>
+      <div style="grid-column:1/-1"><span style="color:#6B7772">รายการประจำเดือน</span> <b>${esc(monthTH(b.month))}</b> <span style="color:#6B7772">อ้างอิงบิล ${esc(invNo(b))}</span></div></div>
+    <table style="width:100%;border-collapse:collapse;font-size:13px"><tbody>
+      ${row("ค่าเช่าห้อง","",b.rent)}
+      ${row("ค่าน้ำ",`${nf(b.waterPrev)} → ${nf(b.waterCurr)} = ${nf(b.waterUnits)} ลบ.ม. × ${baht(b.waterRate)}`,b.water)}
+      ${row("ค่าไฟ",`${nf(b.elecPrev)} → ${nf(b.elecCurr)} = ${nf(b.elecUnits)} หน่วย × ${baht(b.elecRate)}`,b.elec)}
+      ${row("ค่าขยะ","",b.trash)}
+      ${b.other?row("อื่นๆ",esc(b.otherNote||""),b.other):""}
+      <tr><td style="padding:12px 0 2px;font-weight:700;font-size:15px">รวมทั้งสิ้น</td><td style="padding:12px 0 2px;text-align:right;font-weight:700;font-size:17px;font-family:'IBM Plex Mono',monospace">${baht(b.total)}</td></tr>
+      <tr><td colspan="2" style="text-align:right;font-size:12px;color:#3D4A45">(${bahtText(b.total)})</td></tr>
+    </tbody></table>
+    <div style="font-size:12.5px;background:#F2F5F3;border-radius:8px;padding:10px 12px">ชำระโดย <b>${b.method==="cash"?"เงินสด":"โอนเงิน"}</b>${b.method!=="cash"&&st.bank?` เข้าบัญชีธนาคาร${esc(st.bank)}`:""}${v.ref?` · เลขอ้างอิง <span style="font-family:'IBM Plex Mono',monospace">${esc(v.ref)}</span>`:""}</div>
+    <div style="margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;gap:16px">
+      <div style="display:inline-block;border:2px solid #C79A00;color:#8A6A00;border-radius:6px;padding:4px 12px;font-family:'Anuphan',sans-serif;font-weight:700;transform:rotate(-4deg)">ชำระแล้ว PAID</div>
+      <div style="text-align:center;font-size:12px;color:#6B7772"><div style="width:180px;border-bottom:1px dotted #6B7772;height:34px"></div>ผู้รับเงิน</div></div>
+  </div>`;
+}
+function receiptList(all){
+  const paid = all.filter(x=>x.status==="paid").slice(0,12);
+  const sel = S.rcSel;
+  const chip = x => `<span class="${x.status==="paid"?"p":x.status==="pending"?"k":"u"}">${esc(monthTH(x.month,true))} · ${baht(x.total)}</span>`;
+  const others = all.filter(x=>x.status!=="paid").slice(0,6);
+  const n = paid.filter(x=>sel.has(x.id)).length;
+  return `<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:6px"><h2 class="sec" style="margin:0">ใบเสร็จรับเงิน</h2>${paid.length?`<button class="btn sm ghost" data-act="rcAll">${n===paid.length?"ไม่เลือกทั้งหมด":"เลือกทั้งหมด"}</button>`:""}</div>
+    ${paid.length ? `<div class="list">${paid.map(x=>`<div class="li"><input type="checkbox" class="rcchk" id="rc-${esc(x.id)}" data-rc="${esc(x.id)}" ${sel.has(x.id)?"checked":""}><label for="rc-${esc(x.id)}" class="grow" style="cursor:pointer"><div>${esc(monthTH(x.month))}</div><div class="small muted"><span class="num">${esc(rcNo(x))}</span> · ${x.method==="cash"?"เงินสด":"โอน"} · ${esc(dateTH(x.paidAt))}</div></label><span class="amt">${baht(x.total)}</span><button class="btn sm" data-act="rcView" data-v="${esc(x.id)}">ดู</button></div>`).join("")}</div>
+      <button class="btn pri" data-act="rcPrint" style="width:100%;margin-top:12px" ${n&&!S.rcBusy?"":"disabled"}>${S.rcBusy?`<span class="spin"></span> กำลังสร้างไฟล์`:`พิมพ์ใบเสร็จ ${n?n+" ใบ":""} (PDF)`}</button>
+      <p class="small muted" style="margin:8px 0 0">ติ๊กเลือกเดือนที่ต้องการ แล้วกดพิมพ์ ระบบบันทึกเป็นไฟล์ PDF หนึ่งใบต่อหน้า A5 เปิดไฟล์แล้วสั่งพิมพ์ได้เลย</p>`
+    : `<p class="small muted" style="margin:0">ใบเสร็จจะแสดงที่นี่เมื่อชำระบิลแล้ว</p>`}
+    ${others.length?`<div class="label" style="margin:14px 0 6px">ยังไม่ชำระ</div><div class="hist">${others.map(chip).join("")}</div>`:""}
+  </div>`;
+}
+function loadScript(src){ return new Promise((res,rej)=>{ if(document.querySelector(`script[src="${src}"]`)) return res(); const s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = () => rej(new Error("load")); document.head.appendChild(s); }); }
+async function receiptImages(ids){
+  await loadScript("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js");
+  try{ await document.fonts.ready; }catch(e){}
+  const host = document.createElement("div"); host.style.cssText = "position:fixed;left:-10000px;top:0;z-index:-1";
+  document.body.appendChild(host); const out = [];
+  try{
+    for(const id of ids){ host.innerHTML = receiptHTML(S.bills[id]); const cv = await html2canvas(host.firstElementChild, {scale:2, backgroundColor:"#FFFFFF", logging:false}); out.push({id, url: cv.toDataURL("image/jpeg", .92), w: cv.width, h: cv.height}); }
+  } finally { host.remove(); }
+  return out;
+}
+async function printReceipts(){
+  const ids = [...S.rcSel].filter(id => S.bills[id] && S.bills[id].status==="paid").sort();
+  if(!ids.length) return toast("ติ๊กเลือกใบเสร็จก่อน");
+  S.rcBusy = true; render();
+  try{
+    const imgs = await receiptImages(ids);
+    const dl = {save: async ({filename, data}) => { const u = URL.createObjectURL(data); const a = document.createElement("a"); a.href = u; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u), 30000); return {status:"saved"}; }};
+    if(dl){
+      await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({unit:"mm", format:"a5", orientation:"portrait"});
+      imgs.forEach((im,i) => { if(i) pdf.addPage("a5","portrait"); const W = 148, H = Math.min(210, W*im.h/im.w); pdf.addImage(im.url, "JPEG", 0, 0, W, H); });
+      const room = S.bills[ids[0]].room;
+      const name = `ใบเสร็จ-ห้อง${room}-${ids.length===1?ids[0].slice(0,7):ids.length+"เดือน"}.pdf`;
+      try{ await dl.save({filename:name, data: pdf.output("blob")}); toast("บันทึกไฟล์ใบเสร็จแล้ว เปิดไฟล์เพื่อสั่งพิมพ์"); }
+      catch(e){ if(e && e.code==="declined") toast("ยกเลิกการบันทึกไฟล์"); else if(e && e.code==="rate_limited") toast("มีหน้าต่างบันทึกไฟล์เปิดอยู่"); else { openSheet({kind:"rcimg", imgs}); } }
+    } else openSheet({kind:"rcimg", imgs});
+  } catch(e){ console.error(e); toast("สร้างใบเสร็จไม่สำเร็จ ลองอีกครั้ง"); }
+  S.rcBusy = false; render();
+}
+
+function billText(b){
+  const r = S.rooms[b.room]||{};
+  return `${S.settings.name}\nบิลค่าเช่า ${monthTH(b.month)}\nห้อง ${b.room} · ${r.tenant||""}\n${invNo(b)}\n----------------\nค่าเช่าห้อง ${baht(b.rent)}\nค่าน้ำ ${b.waterUnits} ลบ.ม. ${baht(b.water)}\nค่าไฟ ${b.elecUnits} หน่วย ${baht(b.elec)}\nค่าขยะ ${baht(b.trash)}${b.other?`\nอื่นๆ ${b.otherNote||""} ${baht(b.other)}`:""}\n----------------\nรวม ${baht(b.total)}\n${b.status==="paid"?`ชำระแล้ว ${dateTH(b.paidAt)}`:`ครบกำหนด ${dueDate(b.month).split("-").reverse().join("/")}${S.settings.bankAcc?`\nโอนเข้า ${S.settings.bank?"ธ."+S.settings.bank+" ":""}${S.settings.bankAcc} ${S.settings.accountName||""}`:""}\nเช็กบิลและจ่ายผ่าน QR ด้วย Apartment ID: ${r.aptId||""}`}`;
+}
+
+document.addEventListener("click", async ev => {
+  const t = ev.target.closest("[data-act]"); if(!t) return;
+  const act = t.dataset.act, v = t.dataset.v;
+  if(act==="closeBg"){ if(ev.target===t) closeSheet(); return; }
+  if(t.dataset.confirm && !t.dataset.armed){ t.dataset.armed="1"; t.dataset.orig=t.textContent; t.textContent=t.dataset.confirm; setTimeout(()=>{ if(t.isConnected){ delete t.dataset.armed; t.textContent=t.dataset.orig; } },3500); return; }
+  switch(act){
+    case "tab": S.tab = v; S.sheet = null; history.replaceState(null,"","#"+v); render(); window.scrollTo(0,0); break;
+    case "filter": S.filter = S.filter===v ? "all" : v; render(); break;
+    case "open": openSheet({kind:"room", no:v}); break;
+    case "close": closeSheet(); break;
+    case "editRoom": openSheet({kind:"edit", no:v}); break;
+    case "goMeter": S.tab="meter"; S.sheet=null; render(); setTimeout(()=>{ const el=document.getElementById("w-"+v); if(el){ el.focus({preventScroll:true}); el.closest(".mrow").scrollIntoView({block:"center"}); } },80); break;
+    case "saveMeter": saveMeter(v); break;
+    case "reset": { const row = document.getElementById("mr-"+v); row.dataset[t.dataset.k] = "1"; (S.draft[v] = S.draft[v] || {})[t.dataset.k] = true; updateCalc(v); break; }
+    case "zoom": t.classList.toggle("big"); break;
+    case "zoomRow": openSheet({kind:"img", src:t.src}); break;
+    case "toggleQR": S.sheet.showQR = !S.sheet.showQR; renderSheet(); break;
+    case "copy": copyText(v); break;
+    case "copyBill": copyText(billText(S.bills[v])); break;
+    case "cash": await safe(()=>patch("bills", v, {status:"paid", method:"cash", paidAt:new Date().toISOString(), verify:{state:"owner-ok", note:"รับเงินสด"}})); toast("บันทึกรับเงินสดแล้ว"); break;
+    case "approve": await safe(()=>patch("bills", v, {status:"paid", method:"transfer", paidAt:new Date().toISOString(), verify:{...(S.bills[v].verify||{}), state:"owner-ok", note:"เจ้าของหอยืนยันรับเงิน"}})); toast("ยืนยันรับเงินแล้ว"); break;
+    case "reject": await safe(()=>patch("bills", v, {status:"unpaid", verify:{state:"rejected", note:"เจ้าของหอปฏิเสธสลิป"}})); toast("ปฏิเสธสลิป กลับเป็นค้างชำระ"); break;
+    case "unpay": await safe(()=>patch("bills", v, {status:"unpaid", method:null, paidAt:null, verify:null})); toast("ยกเลิกการชำระแล้ว"); break;
+    case "recheck": { const s = await getSlip(v).catch(()=>null); if(!s||!s.img) return toast("ไม่มีรูปสลิปให้ตรวจ"); await patch("bills", v, {verify:{state:"checking", note:"กำลังอ่านสลิป"}}).catch(()=>{}); autoVerify(v, dataUrlToBlob(s.img)); break; }
+    case "saveOther": { const b = S.bills[v]; const amt = r2(Number($("#oAmt").value)||0); const note = $("#oNote").value.trim(); const total = r2(b.rent+b.water+b.elec+b.trash+amt); document.activeElement.blur(); await safe(()=>patch("bills", v, {other:amt, otherNote:note, total})); toast("อัปเดตยอดเป็น "+baht(total)); break; }
+    case "delExp": await safe(()=>remove("expenses", v)); break;
+    case "delRoom": await safe(()=>remove("rooms", v)); closeSheet(); toast("ลบห้องแล้ว"); break;
+    case "clearDemo": clearDemo(); break;
+    case "editPrev": { const dr = (S.draft[v] = S.draft[v] || {}); dr[t.dataset.k+"Edit"] = true; const row = document.getElementById("mr-"+v); if(dr[t.dataset.k]===undefined && row) dr[t.dataset.k] = row.dataset[t.dataset.k]; render(); setTimeout(()=>{ const el = document.getElementById(t.dataset.k+"-"+v); if(el){ el.focus(); el.select(); } }, 60); break; }
+    case "clearReading": { const id = billId(S.month, v); await safe(()=>remove("bills", id)); if(S.photoCache[id] || (S.bills[id]||{}).hasWaterPhoto) await remove("photos", id).catch(()=>{}); delete S.photoCache[id]; delete S.draft[v]; delete S.mphoto[v]; toast(`ล้างเลขมิเตอร์ห้อง ${v} เดือนนี้แล้ว`); render(); break; }
+    case "repFilter": S.repFilter = v; render(); break;
+    case "openRepair": openSheet({kind:"repair", id:v}); break;
+    case "newRepair": if(!occupied().length) return toast("ยังไม่มีห้องที่มีผู้เช่า"); openSheet({kind:"newRepair"}); break;
+    case "quickDone": saveRepair(v, true); break;
+    case "delRepair": { const r = S.repairs[v]; await safe(()=>remove("repairs", v)); if(r && r.hasPhoto) remove("repairPhotos", v).catch(()=>{}); closeSheet(); toast("ลบรายการแล้ว"); break; }
+    case "cancelRepair": if(S.mode==="tenant"){ const { data } = await sb.rpc("dorm_tenant_cancel_repair", {p_apt:S.tenantApt, p_id:v}); toast(data ? "ยกเลิกการแจ้งซ่อมแล้ว" : "ยกเลิกไม่ได้ เจ้าของหอรับเรื่องแล้ว"); await loadTenant(S.tenantApt); render(); } else { await safe(()=>patch("repairs", v, {status:"cancelled"})); toast("ยกเลิกการแจ้งซ่อมแล้ว"); } break;
+    case "logout": await sb.auth.signOut({scope:"local"}); location.hash = ""; location.reload(); break;
+    case "goTenant": S.mode = "tenant"; S.tab = "tenant"; try{ history.replaceState(null,"","#tenant"); }catch(e){} render(); break;
+    case "goOwner": try{ history.replaceState(null,"",location.pathname); }catch(e){} location.reload(); break;
+    case "copyLink": copyText(location.origin + location.pathname + "?apt=" + encodeURIComponent(v) + "#tenant"); break;
+    case "mview": S.meterView = v; render(); break;
+    case "rview": S.roomView = v; try{ localStorage.setItem("roomView", v); }catch(e){} render(); break;
+    case "rcView": openSheet({kind:"rc", id:v}); break;
+    case "rcPrint": printReceipts(); break;
+    case "rcOne": S.rcSel = new Set([v]); closeSheet(); printReceipts(); break;
+    case "rcAll": { const room = Object.values(S.rooms).find(r => (r.aptId||"").toUpperCase() === S.tenantApt.toUpperCase()); const paid = Object.values(S.bills).filter(b=>room && b.room===room.no && b.status==="paid").sort((a,b)=>b.month.localeCompare(a.month)).slice(0,12); const allOn = paid.every(b=>S.rcSel.has(b.id)); paid.forEach(b => allOn ? S.rcSel.delete(b.id) : S.rcSel.add(b.id)); render(); break; }
+    case "delQR": await safe(()=>put("meta","settings",{...S.settings, qrImg:""})); toast("ลบรูป QR แล้ว"); break;
+  }
+});
+document.addEventListener("input", ev => { const pr = ev.target.classList && ev.target.classList.contains("prevIn") && ev.target.closest(".mrow"); if(pr){ ev.target.value = ev.target.value.replace(/[^0-9.]/g,""); const no = pr.dataset.room; (S.draft[no] = S.draft[no] || {})[ev.target.dataset.pk] = ev.target.value; updateCalc(no); return; }
+  const row = ev.target.closest && ev.target.closest(".mrow"); if(row && ev.target.classList.contains("meter")){ ev.target.value = ev.target.value.replace(/[^0-9.]/g,""); const no = row.dataset.room; (S.draft[no] = S.draft[no] || {})[ev.target.id[0]] = ev.target.value; updateCalc(no); } });
+document.addEventListener("keydown", ev => {
+  if(ev.key==="Escape" && S.sheet) closeSheet();
+  if(ev.key==="Enter" && ev.target.matches && ev.target.matches("article[data-act=openRepair]")) openSheet({kind:"repair", id:ev.target.dataset.v});
+  if(ev.key==="Enter" && ev.target.matches && ev.target.matches("tr[data-act=open]")) openSheet({kind:"room", no:ev.target.dataset.v});
+  if(ev.key==="Enter" && ev.target.classList && ev.target.classList.contains("prevIn")){ ev.preventDefault(); const no = ev.target.closest(".mrow").dataset.room; document.getElementById((ev.target.dataset.pk==="wp"?"w-":"e-")+no).focus(); return; }
+  if(ev.key==="Enter" && ev.target.classList && ev.target.classList.contains("meter")){ ev.preventDefault(); const no = ev.target.closest(".mrow").dataset.room; if(ev.target.id.startsWith("w-")) document.getElementById("e-"+no).focus(); else saveMeter(no); }
+});
+document.addEventListener("change", async ev => {
+  const f = ev.target;
+  if(f.dataset && f.dataset.repphoto && f.files && f.files[0]){ const file = f.files[0]; f.value=""; try{ const img = await compressImage(file, 900, .7, 150000); (S.repDraftPhoto = S.repDraftPhoto || {})[f.dataset.repphoto] = img; const l = document.getElementById(f.dataset.repphoto+"PhotoLbl"); if(l) l.textContent = "แนบรูปแล้ว แตะเพื่อเปลี่ยน"; }catch(e){ toast("เปิดรูปไม่ได้ ลองรูปอื่น"); } return; }
+  if(f.dataset && f.dataset.rc){ f.checked ? S.rcSel.add(f.dataset.rc) : S.rcSel.delete(f.dataset.rc); f.blur(); render(); return; }
+  if(f.dataset && f.dataset.mphoto && f.files && f.files[0]){ const file = f.files[0]; f.value = ""; if(!/^image\//.test(file.type)) return toast("เลือกไฟล์รูปภาพ"); takeMeterPhoto(f.dataset.room, f.dataset.mphoto, file); return; }
+  if(f.dataset && f.dataset.qrup && f.files && f.files[0]){ const file = f.files[0]; f.value = ""; if(!/^image\//.test(file.type)) return toast("เลือกไฟล์รูปภาพ QR");
+    try{ const img = await compressImage(file, 800, .9, 150000); await safe(()=>put("meta","settings",{...S.settings, qrImg:img})); toast("บันทึกรูป QR แล้ว"); } catch(e){ toast("เปิดรูปไม่ได้ ลองรูปอื่น"); } return; }
+  if(f.dataset && f.dataset.slip && f.files && f.files[0]){ const file = f.files[0]; if(!/^image\//.test(file.type)) return toast("เลือกไฟล์รูปภาพสลิป"); submitSlip(f.dataset.slip, file, f.dataset.by); }
+});
+document.addEventListener("submit", async ev => {
+  ev.preventDefault(); const id = ev.target.id;
+  if(id==="trForm"){ const room = Object.values(S.rooms).find(r => (r.aptId||"").toUpperCase() === S.tenantApt.toUpperCase()); if(room) submitRepair("tr", room.no); return; }
+  if(id==="orForm"){ submitRepair("or", $("#orRoom").value); return; }
+  if(id==="repEdit"){ saveRepair(ev.target.dataset.id, false); return; }
+  if(id==="aptForm"){ S.tenantApt = $("#aptIn").value.trim().toUpperCase(); $("#aptIn").blur(); if(S.mode==="tenant"){ S.tenantLoading = true; render(); await loadTenant(S.tenantApt); S.tenantLoading = false; } render(); }
+  if(id==="loginForm"){ doLogin(ev.submitter && ev.submitter.dataset.mode); return; }
+  if(id==="expForm"){
+    const amt = Number($("#exAmt").value); if(!(amt>0)) return toast("กรอกจำนวนเงินรายจ่าย");
+    const date = $("#exDate").value || S.month+"-01"; const eid = "e" + Date.now().toString(36);
+    const data = {id:eid, month:date.slice(0,7), date, cat:$("#exCat").value, amount:r2(amt), note:$("#exNote").value.trim()};
+    document.activeElement.blur(); await safe(()=>put("expenses", eid, data)); toast("เพิ่มรายจ่ายแล้ว");
+  }
+  if(id==="setForm"){
+    const n = s => Math.max(0, Number($(s).value)||0);
+    const data = {...S.settings, name:$("#sName").value.trim()||"หอพัก", prefix:($("#sPrefix").value||"APT").toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,5)||"APT", promptpay:$("#sPP").value.replace(/[^0-9]/g,""), accountName:$("#sAcc").value.trim(), bank:$("#sBank").value, bankAcc:$("#sBankAcc").value.replace(/[^0-9-]/g,""), waterRate:n("#sWR"), waterMin:n("#sWM"), elecRate:n("#sER"), trash:n("#sTR"), dueDay:Math.min(28,Math.max(1,Math.round(n("#sDD"))||5))};
+    document.activeElement.blur(); await safe(()=>put("meta","settings",data)); toast("บันทึกการตั้งค่าแล้ว");
+  }
+  if(id==="roomForm"){
+    const orig = ev.target.dataset.orig; const no = orig || cleanRoom($("#rNo").value);
+    if(!no) return toast("กรอกเลขห้อง (ตัวอักษรอังกฤษหรือตัวเลข)");
+    if(!orig && S.rooms[no]) return toast("มีห้อง "+no+" อยู่แล้ว");
+    const old = S.rooms[no] || {};
+    const vac = $("#rVac").checked;
+    const data = {...old, no, floor: Number((no.match(/\d/)||["1"])[0]) || 1, rent:Math.max(0,Number($("#rRent").value)||0), vacant:vac, tenant:vac?"":$("#rTen").value.trim(), phone:vac?"":$("#rPh").value.trim(), waterStart:Number($("#rWS").value)||0, elecStart:Number($("#rES").value)||0,
+      aptId: (!old.aptId || ($("#rNewId") && $("#rNewId").checked)) ? newAptId(no) : old.aptId};
+    if(!vac && !data.tenant) return toast("กรอกชื่อลูกบ้าน หรือเลือกห้องว่าง");
+    document.activeElement.blur(); await safe(()=>put("rooms", no, data)); closeSheet(); toast("บันทึกห้อง "+no+" แล้ว");
+  }
+  if(id==="floorForm"){
+    const f = Math.round(Number($("#fF").value)), n = Math.min(40, Math.round(Number($("#fN").value))), rent = Number($("#fR").value)||0;
+    if(!(f>0) || !(n>0)) return toast("กรอกชั้นและจำนวนห้อง");
+    document.activeElement.blur(); let made = 0;
+    for(let i=1;i<=n;i++){ const no = f + pad(i); if(S.rooms[no]) continue; await safe(()=>put("rooms", no, {no, floor:f, rent, vacant:true, tenant:"", phone:"", waterStart:0, elecStart:0, aptId:newAptId(no)})); made++; }
+    toast(`สร้าง ${made} ห้องบนชั้น ${f} แล้ว`);
+  }
+});
+async function clearDemo(){
+  const jobs = [];
+  Object.values(S.rooms).filter(x=>x.demo).forEach(x=>jobs.push(["rooms",x.no]));
+  Object.values(S.bills).filter(x=>x.demo).forEach(x=>{ jobs.push(["bills",x.id]); if(x.slipAt) jobs.push(["slips",x.id]); });
+  Object.values(S.expenses).filter(x=>x.demo).forEach(x=>jobs.push(["expenses",x.id]));
+  Object.values(S.repairs).filter(x=>x.demo).forEach(x=>jobs.push(["repairs",x.id]));
+  let i = 0;
+  for(const [c,id] of jobs){ try{ await remove(c, id); }catch(e){ console.error(e); } i++; const p = $("#clearProg"); if(p) p.textContent = `กำลังลบ ${i}/${jobs.length}`; }
+  await safe(()=>put("meta","settings",{...DEFAULTS, ...S.settings, name: S.settings.demo ? "หอพักของฉัน" : S.settings.name, promptpay:"", accountName:"", demo:false}));
+  toast("ล้างข้อมูลตัวอย่างแล้ว เริ่มเพิ่มห้องของคุณได้เลย"); render();
+}
+function afterMain(){
+  document.querySelectorAll("#main canvas[data-qr]").forEach(c => { const b = S.bills[c.dataset.qr]; const p = b && ppPayload(S.settings.promptpay, b.total); if(p) drawQR(c,p); });
+  if(S.tab==="meter") occupied().forEach(r => { if(document.getElementById("mr-"+r.no)) updateCalc(r.no); });
+  document.querySelectorAll(".chartwrap").forEach(w => { w.scrollLeft = w.scrollWidth; });
+  loadRepairPhotos();
+  loadPhotos();
+}
+$("#mPrev").onclick = () => { S.month = addMonth(S.month,-1); render(); };
+$("#mNext").onclick = () => { S.month = addMonth(S.month,1); render(); };
+document.querySelectorAll("nav.tabs button").forEach(b => b.addEventListener("click", () => { S.tab = b.dataset.tab; S.sheet=null; try{ history.replaceState(null,"","#"+S.tab); }catch(e){} render(); window.scrollTo(0,0); }));
+
+/* ---------- auth + tenant ---------- */
+function viewReset(){
+  return `<div class="stack" style="max-width:420px;margin:24px auto 0"><div class="card"><h2 class="sec">ตั้งรหัสผ่านใหม่</h2>
+    <form class="form" id="resetForm">
+      <div><label class="small muted" for="rpPass">รหัสผ่านใหม่ (อย่างน้อย 6 ตัว)</label><input class="inp" id="rpPass" type="password" autocomplete="new-password" minlength="6" required></div>
+      ${S.loginMsg ? `<div class="verify ${S.loginErr?"bad":"ok"}">${esc(S.loginMsg)}</div>` : ""}
+      <button class="btn pri" type="submit">บันทึกรหัสผ่านใหม่</button>
+    </form></div></div>`;
+}
+async function sendReset(){
+  blurActive();
+  const rr = await resolveLoginEmail(readId());
+  if(rr.error){ S.loginMsg = rr.error; S.loginErr = true; return render(); }
+  const email = rr.email;
+  const { error } = await sb.auth.resetPasswordForEmail(email, {redirectTo: location.origin + location.pathname});
+  S.loginMsg = error ? ("ส่งอีเมลไม่สำเร็จ: " + error.message) : `ส่งลิงก์ตั้งรหัสใหม่ไปที่ ${email} แล้ว เปิดอีเมลแล้วกดลิงก์`; S.loginErr = !!error; render();
+}
+async function saveNewPassword(){
+  const pw = $("#rpPass").value; if(pw.length < 6){ S.loginMsg = "รหัสผ่านต้องมีอย่างน้อย 6 ตัว"; S.loginErr = true; return render(); }
+  const { data, error } = await sb.auth.updateUser({password: pw});
+  if(error){ S.loginMsg = error.message; S.loginErr = true; return render(); }
+  S.loginMsg = ""; await startOwner(data.user);
+}
+document.addEventListener("click", ev => { if(ev.target.closest && ev.target.closest("[data-act=forgot]")) sendReset(); });
+document.addEventListener("click", ev => { const b = ev.target.closest && ev.target.closest("[data-act=togglePw]"); if(!b) return; const i = $("#lgPass"); if(!i) return; const show = i.type === "password"; i.type = show ? "text" : "password"; b.innerHTML = show ? EYE_OFF : EYE_ON; b.setAttribute("aria-pressed", show); b.setAttribute("aria-label", show ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"); i.focus({preventScroll:true}); });
+document.addEventListener("submit", ev => { if(ev.target.id==="resetForm"){ ev.preventDefault(); saveNewPassword(); } });
+const EYE_ON = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>', EYE_OFF = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 3l18 18M10.6 5.1A10.8 10.8 0 0112 5c6.4 0 10 7 10 7a17 17 0 01-3.2 4.1M6.6 6.6A17.4 17.4 0 002 12s3.6 7 10 7a10 10 0 005.4-1.6M9.9 9.9a3 3 0 004.2 4.2"/></svg>';
+function viewLogin(){
+  return `<div class="stack" style="max-width:420px;margin:24px auto 0">
+    <div class="card"><h2 class="sec">เข้าสู่ระบบเจ้าของหอ</h2>
+      <form class="form" id="loginForm">
+        <div><label class="small muted" for="lgEmail">อีเมล (Gmail) หรือ เบอร์มือถือ</label><input class="inp" id="lgEmail" type="text" inputmode="email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="you@gmail.com หรือ 0812345678" value="${esc(S.lgId||"")}" required></div>
+        <div><label class="small muted" for="lgPass">รหัสผ่าน</label><div class="pwwrap"><input class="inp" id="lgPass" type="password" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false" required><button class="eyebtn" type="button" data-act="togglePw" aria-label="แสดงรหัสผ่าน" aria-pressed="false">${EYE_ON}</button></div></div>
+        ${S.loginMsg ? `<div class="verify ${S.loginErr?"bad":"ok"}">${esc(S.loginMsg)}</div>` : ""}
+        <button class="btn pri" type="submit" data-mode="in">เข้าสู่ระบบ</button>
+      </form>
+      <div class="ordiv"><span>หรือ ไม่ต้องใช้รหัสผ่าน</span></div>
+      <button class="btn" type="button" data-act="magic" style="width:100%">ส่งลิงก์เข้าระบบไปที่ Gmail</button>
+      <p class="small muted" style="margin:8px 0 0">กรอกอีเมลหรือเบอร์ด้านบน แล้วกดปุ่มนี้ ระบบส่งลิงก์ไปที่ Gmail ของเจ้าของหอ กดลิงก์ในอีเมลก็เข้าได้เลย</p>
+      <div style="text-align:center;margin-top:10px"><button class="linkbtn" type="button" data-act="forgot">ลืมรหัสผ่าน? ส่งลิงก์ตั้งรหัสใหม่ทางอีเมล</button></div>
+    </div>
+    <div class="card"><h2 class="sec">สำหรับลูกบ้าน</h2><p class="small muted" style="margin:0 0 10px">เช็กบิล จ่ายเงิน ส่งสลิป พิมพ์ใบเสร็จ และแจ้งซ่อม ด้วย Apartment ID ไม่ต้องสมัครสมาชิก</p><button class="btn" data-act="goTenant">ไปหน้าลูกบ้าน</button></div>
+  </div>`;
+}
+function blurActive(){ if(document.activeElement && document.activeElement.blur) document.activeElement.blur(); }
+function readId(){ const v = (($("#lgEmail") && $("#lgEmail").value) || "").trim(); S.lgId = v; return v; }
+/* email or Thai mobile number -> the owner's login email */
+async function resolveLoginEmail(id){
+  if(!id) return {error:"กรอกอีเมลหรือเบอร์มือถือก่อน"};
+  if(id.includes("@")) return {email: id.toLowerCase()};
+  const digits = id.replace(/\D/g, "");
+  if(digits.length < 9) return {error:"เบอร์มือถือไม่ถูกต้อง"};
+  const { data, error } = await sb.rpc("dorm_login_email", {p_id: digits});
+  if(error) return {error:"ยังไม่ได้ตั้งเบอร์มือถือสำหรับเข้าระบบ ใช้อีเมลแทนไปก่อน"};
+  if(!data) return {error:"ไม่พบเบอร์นี้ ตรวจเบอร์อีกครั้ง หรือใช้อีเมลแทน"};
+  return {email: data};
+}
+async function sendMagic(){
+  blurActive();
+  const r = await resolveLoginEmail(readId());
+  if(r.error){ S.loginMsg = r.error; S.loginErr = true; return render(); }
+  S.loginMsg = "กำลังส่ง…"; S.loginErr = false; render();
+  const { error } = await sb.auth.signInWithOtp({email: r.email, options:{emailRedirectTo: location.origin + location.pathname, shouldCreateUser:false}});
+  if(error){ S.loginMsg = /rate|seconds|too many/i.test(error.message) ? "ส่งบ่อยเกินไป รอประมาณ 1 นาทีแล้วลองใหม่" : /not found|signups not allowed|user/i.test(error.message) ? "ไม่พบบัญชีนี้ ตรวจอีเมลอีกครั้ง" : error.message; S.loginErr = true; return render(); }
+  S.loginMsg = `ส่งลิงก์ไปที่ ${r.email.replace(/^(.{3}).*(@.*)$/, "$1•••$2")} แล้ว เปิด Gmail แล้วกดลิงก์ “Log In” (ถ้าไม่เห็น ดูในสแปม)`; S.loginErr = false; render();
+}
+document.addEventListener("click", ev => { if(ev.target.closest && ev.target.closest("[data-act=magic]")) sendMagic(); });
+async function doLogin(){
+  blurActive();
+  const password = ($("#lgPass").value || "").replace(/^\s+|\s+$/g, "");
+  const r = await resolveLoginEmail(readId());
+  if(r.error){ S.loginMsg = r.error; S.loginErr = true; return render(); }
+  if(!password){ S.loginMsg = "กรอกรหัสผ่าน"; S.loginErr = true; return render(); }
+  S.loginMsg = "กำลังตรวจสอบ…"; S.loginErr = false; render();
+  const res = await sb.auth.signInWithPassword({email: r.email, password});
+  if(res.error){ S.loginMsg = /invalid/i.test(res.error.message) ? "รหัสผ่านไม่ถูกต้อง กดรูปตาเพื่อเช็กสิ่งที่พิมพ์ หรือใช้ “ส่งลิงก์เข้าระบบไปที่ Gmail”" : /rate|too many/i.test(res.error.message) ? "ลองเข้าบ่อยเกินไป รอสักครู่แล้วลองใหม่" : /fetch|network/i.test(res.error.message) ? "เชื่อมต่ออินเทอร์เน็ตไม่ได้ ลองใหม่อีกครั้ง" : /confirm/i.test(res.error.message) ? "บัญชียังไม่ได้ยืนยันอีเมล ใช้ “ส่งลิงก์เข้าระบบไปที่ Gmail” แทน" : res.error.message; S.loginErr = true; return render(); }
+  await startOwner(res.data.session.user);
+}
+let loadTimer = null;
+async function loadOwnerData(){
+  const [settings, rooms, bills, expenses, repairs] = await Promise.all([
+    sb.from(TABLE.meta).select("*").eq("id","main").maybeSingle(), fetchAll("rooms"), fetchAll("bills"), fetchAll("expenses"), fetchAll("repairs")]);
+  S.settings = {...DEFAULTS, ...(settings.data ? fromRow(settings.data) : {})}; S.rooms = rooms; S.bills = bills; S.expenses = expenses; S.repairs = repairs;
+}
+function scheduleReload(){ clearTimeout(loadTimer); loadTimer = setTimeout(async ()=>{ try{ await loadOwnerData(); render(); }catch(e){ console.error(e); } }, 400); }
+async function startOwner(user){
+  S.user = user; S.mode = "loading"; render();
+  const { data: ok, error } = await sb.rpc("dorm_claim_owner");
+  if(error || !ok){ await sb.auth.signOut({scope:"local"}); S.mode = "login"; S.loginMsg = `บัญชี ${user && user.email ? user.email : "นี้"} ไม่มีสิทธิ์เจ้าของหอ ใช้ Gmail ที่ลงทะเบียนเป็นเจ้าของหอ`; S.loginErr = true; return render(); }
+  try{ await loadOwnerData(); }catch(e){ console.error(e); S.mode = "login"; S.loginMsg = "โหลดข้อมูลไม่สำเร็จ ลองใหม่อีกครั้ง"; S.loginErr = true; return render(); }
+  S.mode = "owner"; S.ready = true; S.online = true; S.loginMsg = "";
+  if(S.tab==="tenant" && initialHash==="tenant") S.tab = "rooms";
+  const ch = sb.channel("dorm-live");
+  const map = {dorm_settings:"meta", dorm_rooms:"rooms", dorm_bills:"bills", dorm_expenses:"expenses", dorm_repairs:"repairs"};
+  Object.keys(map).forEach(t => ch.on("postgres_changes", {event:"*", schema:"public", table:t}, payload => {
+    const col = map[t];
+    if(col==="meta"){ if(payload.new && payload.new.id) S.settings = {...DEFAULTS, ...fromRow(payload.new)}; render(); return; }
+    const pk = pkOf(col);
+    if(payload.eventType==="DELETE"){ const k = payload.old && payload.old[pk]; if(k) delete memCol(col)[k]; }
+    else if(payload.new){ memCol(col)[payload.new[pk]] = fromRow(payload.new); }
+    render();
+  }));
+  ch.subscribe();
+  document.addEventListener("visibilitychange", () => { if(document.visibilityState==="visible" && S.mode==="owner") scheduleReload(); });
+  setInterval(() => { if(document.visibilityState==="visible" && S.mode==="owner") scheduleReload(); }, 90000);
+  render();
+}
+async function loadTenant(apt){
+  S.rooms = {}; S.bills = {}; S.repairs = {};
+  if(!apt) return;
+  const { data, error } = await sb.rpc("dorm_tenant_portal", {p_apt: apt});
+  if(error || !data) { try{ localStorage.removeItem("aptId"); }catch(e){} return; }
+  const room = fromRow(data.room); room.vacant = false; S.rooms = {[room.no]: room};
+  S.settings = {...DEFAULTS, ...fromRow(data.settings || {})};
+  (data.bills||[]).forEach(b => { const o = fromRow(b); S.bills[o.id] = o; });
+  (data.repairs||[]).forEach(r => { const o = fromRow(r); S.repairs[o.id] = o; });
+  try{ localStorage.setItem("aptId", apt); }catch(e){}
+}
+/* ---------- boot ---------- */
+(async function boot(){
+  if(!sb){ $("#main").innerHTML = `<div class="card empty"><h2>เชื่อมต่อฐานข้อมูลไม่ได้</h2><p class="small muted">ตรวจอินเทอร์เน็ตแล้วโหลดหน้านี้ใหม่</p></div>`; return; }
+  const qs = new URLSearchParams(location.search); const aptQ = qs.get("apt");
+  const hs = new URLSearchParams(location.hash.replace(/^#/, ""));
+  const oauthErr = hs.get("error_description") || qs.get("error_description");
+  const cameFromOAuth = hs.has("access_token") || qs.has("code") || !!oauthErr;
+  let savedApt = ""; try{ savedApt = localStorage.getItem("aptId") || ""; }catch(e){}
+  const { data: { session } } = await sb.auth.getSession();
+  const isRecovery = hs.get("type") === "recovery";
+  if(cameFromOAuth){ try{ history.replaceState(null, "", location.pathname); }catch(e){} }
+  if(isRecovery && session){ S.mode = "reset"; render(); return; }
+  if(oauthErr && !session){ S.mode = "login"; S.loginMsg = "เข้าสู่ระบบด้วย Google ไม่สำเร็จ: " + oauthErr; S.loginErr = true; render(); return; }
+  if(session && !aptQ && initialHash!=="tenant"){ await startOwner(session.user); return; }
+  if(aptQ || initialHash==="tenant"){
+    S.mode = "tenant"; S.tab = "tenant"; S.tenantApt = (aptQ || savedApt || "").toUpperCase();
+    if(S.tenantApt){ S.tenantLoading = true; render(); await loadTenant(S.tenantApt); S.tenantLoading = false; }
+    render(); return;
+  }
+  S.mode = "login"; render();
+})();
+</script>
+</body>
+</html>
