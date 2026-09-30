@@ -330,6 +330,10 @@ textarea.inp{resize:vertical;min-height:80px}
 @media (max-width:560px){ nav.tabs button{font-size:10.5px} nav.tabs button svg{width:21px;height:21px} .rgrid{grid-template-columns:1fr} }
 
 body.nonav nav.tabs{display:none}
+.pwrow{display:flex;gap:6px}
+.pwrow .inp{flex:1;min-width:0}
+.pweye{flex:none;min-width:64px}
+#lgEmail,#lgPass,#rpPass,#aptIn{font-size:16px}
 .gbtn{width:100%;gap:10px;background:#FFFFFF;color:#1F1F1F;border-color:#DADCE0;font-weight:600}
 .gbtn:hover{border-color:#9AA0A6}
 .ordiv{display:flex;align-items:center;gap:10px;margin:14px 0 10px;color:var(--muted);font-size:12.5px}
@@ -1459,6 +1463,7 @@ async function saveNewPassword(){
   S.loginMsg = ""; await startOwner(data.user);
 }
 document.addEventListener("click", ev => { if(ev.target.closest && ev.target.closest("[data-act=forgot]")) sendReset(); });
+document.addEventListener("click", ev => { const b = ev.target.closest && ev.target.closest("[data-act=togglePw]"); if(!b) return; const i = $("#lgPass"); if(!i) return; const show = i.type === "password"; i.type = show ? "text" : "password"; b.textContent = show ? "ซ่อน" : "แสดง"; b.setAttribute("aria-label", show ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"); });
 document.addEventListener("submit", ev => { if(ev.target.id==="resetForm"){ ev.preventDefault(); saveNewPassword(); } });
 function viewLogin(){
   return `<div class="stack" style="max-width:420px;margin:24px auto 0">
@@ -1466,8 +1471,8 @@ function viewLogin(){
       <button class="btn gbtn" type="button" data-act="google"><svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.9 6.1C12.5 13.6 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.4 5.7c4.3-4 6.9-9.9 6.9-17.1z"/><path fill="#FBBC05" d="M10.6 28.6A14.5 14.5 0 019.5 24c0-1.6.3-3.2.8-4.6l-7.9-6.1A24 24 0 000 24c0 3.9.9 7.5 2.6 10.7l8-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.4-5.7c-2.1 1.4-4.8 2.3-8.5 2.3-6.2 0-11.5-4.2-13.4-9.9l-8 6.1C6.6 42.6 14.6 48 24 48z"/></svg>เข้าสู่ระบบด้วย Google (Gmail)</button>
       <div class="ordiv"><span>หรือใช้อีเมลและรหัสผ่าน</span></div>
       <form class="form" id="loginForm">
-        <div><label class="small muted" for="lgEmail">อีเมล</label><input class="inp" id="lgEmail" type="email" autocomplete="email" required></div>
-        <div><label class="small muted" for="lgPass">รหัสผ่าน</label><input class="inp" id="lgPass" type="password" autocomplete="current-password" minlength="6" required></div>
+        <div><label class="small muted" for="lgEmail">อีเมล</label><input class="inp" id="lgEmail" type="email" inputmode="email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required></div>
+        <div><label class="small muted" for="lgPass">รหัสผ่าน</label><div class="pwrow"><input class="inp" id="lgPass" type="password" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false" minlength="6" required><button class="btn pweye" type="button" data-act="togglePw" aria-label="แสดงรหัสผ่าน">แสดง</button></div></div>
         ${S.loginMsg ? `<div class="verify ${S.loginErr?"bad":"ok"}">${esc(S.loginMsg)}</div>` : ""}
         <button class="btn pri" type="submit" data-mode="in">เข้าสู่ระบบ</button>
         <button class="btn ghost" type="submit" data-mode="up">สร้างบัญชีใหม่</button>
@@ -1483,11 +1488,11 @@ async function signInGoogle(){
 }
 document.addEventListener("click", ev => { if(ev.target.closest && ev.target.closest("[data-act=google]")) signInGoogle(); });
 async function doLogin(mode){
-  const email = $("#lgEmail").value.trim(), password = $("#lgPass").value;
+  const email = $("#lgEmail").value.trim().toLowerCase(), password = $("#lgPass").value.replace(/^\s+|\s+$/g, "");
   if(!email || password.length < 6) { S.loginMsg = "กรอกอีเมลและรหัสผ่านอย่างน้อย 6 ตัว"; S.loginErr = true; return render(); }
   S.loginMsg = "กำลังตรวจสอบ…"; S.loginErr = false; document.activeElement.blur(); render();
   const res = mode==="up" ? await sb.auth.signUp({email, password}) : await sb.auth.signInWithPassword({email, password});
-  if(res.error){ S.loginMsg = /invalid/i.test(res.error.message) ? "อีเมลหรือรหัสผ่านไม่ถูกต้อง" : /registered/i.test(res.error.message) ? "อีเมลนี้มีบัญชีแล้ว กดเข้าสู่ระบบ" : /confirm/i.test(res.error.message) ? "ยังไม่ได้ยืนยันอีเมล เปิดอีเมลแล้วกดลิงก์ยืนยันก่อน" : res.error.message; S.loginErr = true; return render(); }
+  if(res.error){ S.loginMsg = /invalid/i.test(res.error.message) ? "อีเมลหรือรหัสผ่านไม่ถูกต้อง กด “แสดง” เพื่อเช็กรหัสที่พิมพ์ หรือกด “ลืมรหัสผ่าน”" : /rate|too many/i.test(res.error.message) ? "ลองเข้าบ่อยเกินไป รอสักครู่แล้วลองใหม่" : /fetch|network/i.test(res.error.message) ? "เชื่อมต่ออินเทอร์เน็ตไม่ได้ ลองใหม่อีกครั้ง" : /registered/i.test(res.error.message) ? "อีเมลนี้มีบัญชีแล้ว กดเข้าสู่ระบบ" : /confirm/i.test(res.error.message) ? "ยังไม่ได้ยืนยันอีเมล เปิดอีเมลแล้วกดลิงก์ยืนยันก่อน" : res.error.message; S.loginErr = true; return render(); }
   if(mode==="up" && !res.data.session){ S.loginMsg = "สร้างบัญชีแล้ว เปิดอีเมลเพื่อยืนยัน แล้วกลับมาเข้าสู่ระบบ"; S.loginErr = false; return render(); }
   await startOwner(res.data.session.user);
 }
